@@ -1,0 +1,26 @@
+{
+  "name": "jest-light-runner",
+  "version": "0.1.0",
+  "description": "A Jest runner that runs tests directly in bare Node.js, without virtualizing the environment.",
+  "author": "Nicolò Ribaudo (https://github.com/nicolo-ribaudo)",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "expect": "^27.5.1",
+    "jest-circus": "^27.5.1",
+    "jest-each": "^27.5.1",
+    "jest-mock": "^27.5.1",
+    "jest-snapshot": "^27.5.1",
+    "piscina": "^3.1.0",
+    "supports-color": "^9.2.1"
+  },
+  "peerDependencies": {
+    "jest": "^27.0.0"
+  },
+  "engines": {
+    "node": ">=12.20.0"
+  },
+  "license": "MIT"
+}
