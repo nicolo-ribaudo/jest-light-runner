@@ -46,18 +46,18 @@ module.exports = {
 
 ### Using custom Node.js ESM loaders
 
-You can specify custom ESM loaders using Node.js's [`--experimental-loader`](https://nodejs.org/api/cli.html#--experimental-loadermodule) option. Jest's CLI doesn't allow providing Node.js-specific options, but you can do it in two alternative ways:
+You can specify custom ESM loaders using Node.js's [`--loader`](https://nodejs.org/api/cli.html#--loadermodule) option. Jest's CLI doesn't allow providing Node.js-specific options, but you can do it in two alternative ways:
 1. Run Jest by explicitly running Node.js:
    ```
-   node --experimental-loader ts-node/esm ./node_modules/.bin/jest
+   node --loader ts-node/esm ./node_modules/.bin/jest
    ```
 2. Use the [`NODE_OPTIONS`](https://nodejs.org/docs/latest-v17.x/api/cli.html#node_optionsoptions) environment variable:
    ```
-   NODE_OPTIONS='--experimental-loader ts-node/esm' jest
+   NODE_OPTIONS='--loader ts-node/esm' jest
    ```
    or, if you are using [`cross-env`](https://www.npmjs.com/package/cross-env) to be able to provide environment variables on multiple OSes:
    ```
-   cross-env NODE_OPTIONS='--experimental-loader ts-node/esm' jest
+   cross-env NODE_OPTIONS='--loader ts-node/esm' jest
    ```
 
 ## Stability
