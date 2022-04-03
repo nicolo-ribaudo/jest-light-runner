@@ -32,6 +32,27 @@ export default async function ({
 }) {
   port.postMessage("start");
 
+  const {setupFiles, snapshotSerializers} = test.context.config;
+
+  // https://github.com/facebook/jest/issues/11038
+  for (const setupFile of setupFiles) {
+    const setup = await import(pathToFileURL(setupFile));
+
+    if (setup && setup.default) {
+      await setup.default;
+    }
+  }
+
+  for (const snapshotSerializer of snapshotSerializers) {
+    let serializer = await import(pathToFileURL(snapshotSerializer));
+
+    if (serializer && serializer.default) {
+      serializer = serializer.default;
+    }
+
+    snapshot.addSerializer(serializer);
+  }
+
   const testNamePatternRE =
     testNamePattern != null ? new RegExp(testNamePattern, "i") : null;
 
