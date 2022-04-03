@@ -10,7 +10,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 
 ### Supported Jest features
 
-- Jest globals: `expect`, `test`, `it`, `describe`, `beforeAll`, `afterAll`, `beoreEach`, `afterEach`
+- Jest globals: `expect`, `test`, `it`, `describe`, `beforeAll`, `afterAll`, `beforeEach`, `afterEach`
 - Jest function mocks: `jest.fn`, `jest.spyOn`
 - Inline and external snapshots
 - `--testNamePattern`/`-t`, to only run some specific tests
