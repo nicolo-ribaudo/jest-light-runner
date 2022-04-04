@@ -44,7 +44,7 @@ export default async function ({
   }
 
   for (const snapshotSerializer of [...snapshotSerializers].reverse()) {
-    let { default: serializer } = await import(pathToFileURL(snapshotSerializer));
+    const { default: serializer } = await import(pathToFileURL(snapshotSerializer));
     snapshot.addSerializer(serializer);
   }
 
