@@ -36,20 +36,15 @@ export default async function ({
 
   // https://github.com/facebook/jest/issues/11038
   for (const setupFile of setupFiles) {
-    const setup = await import(pathToFileURL(setupFile));
+    const { default: setup } = await import(pathToFileURL(setupFile));
 
-    if (setup && setup.default) {
-      await setup.default;
+    if (typeof setup === 'function') {
+      await setup();
     }
   }
 
-  for (const snapshotSerializer of snapshotSerializers) {
-    let serializer = await import(pathToFileURL(snapshotSerializer));
-
-    if (serializer && serializer.default) {
-      serializer = serializer.default;
-    }
-
+  for (const snapshotSerializer of [...snapshotSerializers].reverse()) {
+    let { default: serializer } = await import(pathToFileURL(snapshotSerializer));
     snapshot.addSerializer(serializer);
   }
 
