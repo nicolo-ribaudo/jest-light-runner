@@ -18,6 +18,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 ### Unsupported Jest features
 
 - `import`/`require` mocks. You can use a custom mocking library such as [`esmock`](https://github.com/iambumblehead/esmock) or [`proxyquire`](https://github.com/thlorenz/proxyquire).
+- On-the-fly compilation (for example, with Babel or TypeScript). You can use a Node.js module loader, such as [`ts-node/esm`](https://github.com/TypeStrong/ts-node).
 - Tests isolation. Jest runs every test file in its own global environment, meaning that modification to built-ins done in one test file don't affect other test files. This is not supported, but you can use the Node.js option [`--frozen-intrinsics`](https://nodejs.org/api/cli.html#--frozen-intrinsics) to prevent such modifications.
 
 ### Partially supported features
@@ -43,6 +44,22 @@ module.exports = {
 };
 ```
 
+### Using custom Node.js ESM loaders
+
+You can specify custom ESM loaders using Node.js's [`--loader`](https://nodejs.org/api/cli.html#--loadermodule) option. Jest's CLI doesn't allow providing Node.js-specific options, but you can do it in two alternative ways:
+1. Run Jest by explicitly running Node.js:
+   ```
+   node --loader ts-node/esm ./node_modules/.bin/jest
+   ```
+2. Use the [`NODE_OPTIONS`](https://nodejs.org/docs/latest-v17.x/api/cli.html#node_optionsoptions) environment variable:
+   ```
+   NODE_OPTIONS='--loader ts-node/esm' jest
+   ```
+   or, if you are using [`cross-env`](https://www.npmjs.com/package/cross-env) to be able to provide environment variables on multiple OSes:
+   ```
+   cross-env NODE_OPTIONS='--loader ts-node/esm' jest
+   ```
+
 ## Stability
 
 This project follows semver, and it's currently in the `0.x` release line.
@@ -51,4 +68,4 @@ It is used to run tests in the [`babel/babel`](https://github.com/babel/babel/) 
 
 ## Donations
 
-If you use this package and it has helped with your tests, please consider [sponsoring me on GitHub](https://github.com/sponsors/nicolo-ribaudo)! You can also donate to Jest on their [OpenCollective page](https://opencollective.com/jest)
+If you use this package and it has helped with your tests, please consider [sponsoring me on GitHub](https://github.com/sponsors/nicolo-ribaudo)! You can also donate to Jest on their [OpenCollective page](https://opencollective.com/jest).
