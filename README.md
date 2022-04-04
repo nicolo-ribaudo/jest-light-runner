@@ -14,6 +14,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 - Jest function mocks: `jest.fn`, `jest.spyOn`
 - Inline and external snapshots
 - `--testNamePattern`/`-t`, to only run some specific tests
+- Jest config: `setupFiles`, `snapshotSerializers`
 
 ### Unsupported Jest features
 
