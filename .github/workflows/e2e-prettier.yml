@@ -8,15 +8,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v3
-      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           path: "jest-light-runner"
-      - uses: actions/checkout@v3
+
+      - name: Checkout "prettier"
+        uses: actions/checkout@v3
         with:
           repository: "prettier/prettier"
           ref: "next"
           path: "prettier"
+
       - name: Run tests
         run: |
           cd prettier
