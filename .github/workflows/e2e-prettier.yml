@@ -1,0 +1,26 @@
+name: E2E test(Prettier)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          cache: "yarn"
+      - uses: actions/checkout@v3
+        with:
+          path: "jest-light-runner"
+      - uses: actions/checkout@v3
+        with:
+          repository: "prettier/prettier"
+          ref: "next"
+          path: "prettier"
+      - run: |
+          cd prettier
+          yarn install --frozen-lockfile
+          yarn add --dev jest-light-runner@link:../jest-light-runner
+          yarn test:format
