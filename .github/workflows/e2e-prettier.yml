@@ -27,5 +27,5 @@ jobs:
         run: |
           cd prettier
           yarn install --frozen-lockfile
-          yarn upgrade jest-light-runner@file:../jest-light-runner
+          yarn upgrade jest-light-runner@file:../jest-light-runner --verbose
           yarn test:format
