@@ -28,5 +28,4 @@ jobs:
           cd prettier
           yarn install --frozen-lockfile
           yarn add --dev jest-light-runner@file:../jest-light-runner
-          yarn why jest-light-runner
           yarn test:format
