@@ -7,6 +7,10 @@
   "exports": {
     ".": "./src/index.js"
   },
+  "scripts": {
+    "format": "yarn prettier src *.md -w",
+    "lint": "yarn prettier src *.md -c"
+  },
   "dependencies": {
     "expect": "^27.5.1",
     "jest-circus": "^27.5.1",
@@ -15,6 +19,9 @@
     "jest-snapshot": "^27.5.1",
     "piscina": "^3.1.0",
     "supports-color": "^9.2.1"
+  },
+  "devDependencies": {
+    "prettier": "^2.6.2"
   },
   "peerDependencies": {
     "jest": "^27.0.0"
