@@ -65,7 +65,7 @@ You can specify custom ESM loaders using Node.js's [`--loader`](https://nodejs.o
 
 This project follows semver, and it's currently in the `0.x` release line.
 
-It is used to run tests in the [`babel/babel`](https://github.com/babel/babel/) repository, but there are no tests for the runner itself. I would gladly accept a pull requests adding a test infrastructure!
+It is used to run tests in the [`babel/babel`](https://github.com/babel/babel/) and [`prettier/prettier`](https://github.com/prettier/prettier/) repositories, but there are no internal tests for the runner itself. I would gladly accept a pull requests adding a test infrastructure!
 
 ## Donations
 
