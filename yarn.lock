@@ -1031,7 +1031,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"collect-v8-coverage@npm:^1.0.0":
+"collect-v8-coverage@npm:^1.0.0, collect-v8-coverage@npm:^1.0.1":
   version: 1.0.1
   resolution: "collect-v8-coverage@npm:1.0.1"
   checksum: 4efe0a1fccd517b65478a2364b33dadd0a43fc92a56f59aaece9b6186fe5177b2de471253587de7c91516f07c7268c2f6770b6cbcffc0e0ece353b766ec87e55
@@ -1655,6 +1655,8 @@ __metadata:
   resolution: "jest-light-runner@workspace:."
   dependencies:
     "@jest/expect": ^29.0.1
+    "@jest/transform": ^29.0.1
+    collect-v8-coverage: ^1.0.1
     jest-circus: ^29.0.1
     jest-each: ^29.0.1
     jest-mock: ^29.0.1
