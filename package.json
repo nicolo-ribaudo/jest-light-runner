@@ -8,8 +8,8 @@
     ".": "./src/index.js"
   },
   "scripts": {
-    "format": "yarn prettier src *.md -w",
-    "lint": "yarn prettier src *.md -c"
+    "format": "yarn prettier . --ignore-unknown --write",
+    "lint": "yarn prettier . --ignore-unknown --check"
   },
   "dependencies": {
     "expect": "^27.5.1",
