@@ -57,7 +57,7 @@ jobs:
 
       - name: Update jest-light-runner
         run: |
-          yarn upgrade jest-light-runner@file:../jest-light-runner
+          yarn up jest-light-runner@file:../jest-light-runner
         working-directory: babel
 
       - name: Test
