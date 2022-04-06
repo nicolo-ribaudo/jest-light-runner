@@ -51,7 +51,7 @@ jobs:
 
       - name: Build
         run: |
-          yarn install --frozen-lockfile
+          yarn install --immutable
           make build-no-bundle
         working-directory: babel
 
