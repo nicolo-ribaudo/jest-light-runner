@@ -44,7 +44,7 @@ or in `jest.config.js`:
 
 ```js
 module.exports = {
-  runner: 'jest-light-runner',
+  runner: "jest-light-runner",
 };
 ```
 

@@ -1678,7 +1678,10 @@ __metadata:
     jest-mock: ^27.5.1
     jest-snapshot: ^27.5.1
     piscina: ^3.1.0
+    prettier: ^2.6.2
     supports-color: ^9.2.1
+  peerDependencies:
+    jest: ^27.0.0
   languageName: unknown
   linkType: soft
 
@@ -2333,6 +2336,15 @@ __metadata:
     nice-napi:
       optional: true
   checksum: c1980c7d45d85f53265652dd2fc62a2b9e9d2321f5bbb9fc1796edb9c1324bb77c153e823a0d6454c3c35098820efedff584737cc282207480afe478a3b8a166
+  languageName: node
+  linkType: hard
+
+"prettier@npm:^2.6.2":
+  version: 2.6.2
+  resolution: "prettier@npm:2.6.2"
+  bin:
+    prettier: bin-prettier.js
+  checksum: 48d08dde8e9fb1f5bccdd205baa7f192e9fc8bc98f86e1b97d919de804e28c806b0e6cc685e4a88211aa7987fa9668f30baae19580d87ced3ed0f2ec6572106f
   languageName: node
   linkType: hard
 
