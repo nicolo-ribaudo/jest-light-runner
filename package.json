@@ -12,6 +12,7 @@
     "lint": "yarn prettier . --ignore-unknown --check"
   },
   "dependencies": {
+    "@jest/transform": "^27.5.1",
     "collect-v8-coverage": "^1.0.1",
     "expect": "^27.5.1",
     "jest-circus": "^27.5.1",

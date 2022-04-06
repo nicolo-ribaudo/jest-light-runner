@@ -87,17 +87,7 @@ export default async function ({
     v8Coverage = v8Coverage
       .filter(res => res.url.startsWith("file://"))
       .map(res => ({ ...res, url: fileURLToPath(res.url) }))
-        .filter(res => !res.url.includes('node_modules'))
-      // .filter(
-      //     res =>
-      //         // TODO: will this work on windows? It might be better if `shouldInstrument` deals with it anyways
-      //         res.url.startsWith(this._config.rootDir) &&
-      //         this._fileTransforms.has(res.url) &&
-      //         shouldInstrument(res.url, this._coverageOptions, this._config),
-      // )
-      .map(result => {
-        return { result };
-      });
+      .map(result => ({ result }));
   }
 
   snapshotState._inlineSnapshots.forEach(({ frame }) => {

@@ -1672,6 +1672,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "jest-light-runner@workspace:."
   dependencies:
+    "@jest/transform": ^27.5.1
     collect-v8-coverage: ^1.0.1
     expect: ^27.5.1
     jest-circus: ^27.5.1
