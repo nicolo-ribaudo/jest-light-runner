@@ -4,7 +4,7 @@ A Jest runner that runs tests directly in bare Node.js, without virtualizing the
 
 ## Comparison with the default Jest runner
 
-This approach is wasy faster than the default Jest runner (it [more than doubled](https://github.com/babel/babel/pull/13966#pullrequestreview-819765720) the speed of [Babel](https://github.com/babel/babel)'s tests suite) and has complete support for the Node.js ESM implementation. However, it doesn't provide support for most of Jest's advanced features.
+This approach is way faster than the default Jest runner (it [more than doubled](https://github.com/babel/babel/pull/13966#pullrequestreview-819765720) the speed of [Babel](https://github.com/babel/babel)'s tests suite) and has complete support for the Node.js ESM implementation. However, it doesn't provide support for most of Jest's advanced features.
 
 The lists below are not comprehensive: feel free to [start a discussion](https://github.com/nicolo-ribaudo/jest-light-runner/discussions/new) regarding any other missing Jest feature!
 
@@ -31,6 +31,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 After installing `jest` and `jest-light-runner`, add it to your Jest config.
 
 In `package.json`:
+
 ```json
 {
   "jest": {
@@ -38,16 +39,19 @@ In `package.json`:
   }
 }
 ```
+
 or in `jest.config.js`:
+
 ```js
 module.exports = {
-    runner: "jest-light-runner",
+  runner: 'jest-light-runner',
 };
 ```
 
 ### Using custom Node.js ESM loaders
 
 You can specify custom ESM loaders using Node.js's [`--loader`](https://nodejs.org/api/cli.html#--loadermodule) option. Jest's CLI doesn't allow providing Node.js-specific options, but you can do it in two alternative ways:
+
 1. Run Jest by explicitly running Node.js:
    ```
    node --loader ts-node/esm ./node_modules/.bin/jest
