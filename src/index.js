@@ -2,6 +2,7 @@ import { Piscina } from "piscina";
 import supportsColor from "supports-color";
 import { MessageChannel } from "worker_threads";
 import { shouldInstrument } from "@jest/transform";
+import { fileURLToPath } from "url";
 
 /** @typedef {import("@jest/test-result").Test} Test */
 
@@ -49,12 +50,16 @@ export default class LightRunner {
 
     return {
       ...result,
-      v8Coverage: result.v8Coverage.filter(
-        ({ result }) =>
-          // TODO: will this work on windows? It might be better if `shouldInstrument` deals with it anyways
-          result.url.startsWith(this.#config.rootDir) &&
-          shouldInstrument(result.url, coverageOptions, projectConfig)
-      ),
+      v8Coverage: result.v8Coverage
+        .filter(res => res.url.startsWith("file://"))
+        .map(res => ({ ...res, url: fileURLToPath(res.url) }))
+        .filter(
+          ({ url }) =>
+            // TODO: will this work on windows? It might be better if `shouldInstrument` deals with it anyways
+            url.startsWith(projectConfig.rootDir) &&
+            shouldInstrument(url, coverageOptions, projectConfig)
+        )
+        .map(result => ({ result })),
     };
   }
 

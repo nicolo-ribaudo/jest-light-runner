@@ -84,10 +84,6 @@ export default async function ({
 
   if (instrumenter) {
     v8Coverage = await instrumenter.stopInstrumenting();
-    v8Coverage = v8Coverage
-      .filter(res => res.url.startsWith("file://"))
-      .map(res => ({ ...res, url: fileURLToPath(res.url) }))
-      .map(result => ({ result }));
   }
 
   snapshotState._inlineSnapshots.forEach(({ frame }) => {
