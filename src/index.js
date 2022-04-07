@@ -39,13 +39,12 @@ export default class LightRunner {
     }
 
     const coverageOptions = {
-      changedFiles: this.#testContext && this.#testContext.changedFiles,
+      changedFiles: this.#testContext.changedFiles,
       collectCoverage: true,
       collectCoverageFrom: this.#config.collectCoverageFrom,
       collectCoverageOnlyFrom: this.#config.collectCoverageOnlyFrom,
       coverageProvider: this.#config.coverageProvider,
       sourcesRelatedToTestsInChangedFiles:
-        this.#testContext &&
         this.#testContext.sourcesRelatedToTestsInChangedFiles,
     };
 
