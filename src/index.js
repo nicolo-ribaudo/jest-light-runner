@@ -65,7 +65,12 @@ export default class LightRunner {
    * @param {*} onFailure
    */
   runTests(tests, watcher, onStart, onResult, onFailure) {
-    const { updateSnapshot, testNamePattern, collectCoverage, coverageProvider } = this.#config;
+    const {
+      updateSnapshot,
+      testNamePattern,
+      collectCoverage,
+      coverageProvider,
+    } = this.#config;
 
     return Promise.all(
       tests.map(test => {
