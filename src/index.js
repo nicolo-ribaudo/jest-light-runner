@@ -33,19 +33,19 @@ export default class LightRunner {
     });
   }
 
-  #filterCoverage(result, projectConfig) {
+  filterCoverage(result, projectConfig) {
     if (!result.v8Coverage) {
       return result;
     }
 
     const coverageOptions = {
-      changedFiles: this.#testContext?.changedFiles,
+      changedFiles: this.#testContext && this.#testContext.changedFiles,
       collectCoverage: true,
       collectCoverageFrom: this.#config.collectCoverageFrom,
       collectCoverageOnlyFrom: this.#config.collectCoverageOnlyFrom,
       coverageProvider: this.#config.coverageProvider,
       sourcesRelatedToTestsInChangedFiles:
-        this.#testContext?.sourcesRelatedToTestsInChangedFiles,
+        this.#testContext && this.#testContext.sourcesRelatedToTestsInChangedFiles,
     };
 
     return {
@@ -94,7 +94,7 @@ export default class LightRunner {
             result =>
               void onResult(
                 test,
-                this.#filterCoverage(result, test.context.config)
+                this.filterCoverage(result, test.context.config)
               ),
             error => void onFailure(test, error)
           );
