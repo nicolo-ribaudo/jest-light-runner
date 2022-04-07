@@ -45,7 +45,8 @@ export default class LightRunner {
       collectCoverageOnlyFrom: this.#config.collectCoverageOnlyFrom,
       coverageProvider: this.#config.coverageProvider,
       sourcesRelatedToTestsInChangedFiles:
-        this.#testContext && this.#testContext.sourcesRelatedToTestsInChangedFiles,
+        this.#testContext &&
+        this.#testContext.sourcesRelatedToTestsInChangedFiles,
     };
 
     return {
