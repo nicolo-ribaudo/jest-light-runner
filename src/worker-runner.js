@@ -30,7 +30,7 @@ export default async function ({
   updateSnapshot,
   testNamePattern,
   port,
-  collectCoverage,
+  collectV8Coverage,
 }) {
   port.postMessage("start");
 
@@ -61,8 +61,7 @@ export default async function ({
   const results = [];
 
   let instrumenter = null;
-
-  if (collectCoverage) {
+  if (collectV8Coverage) {
     instrumenter = new CoverageInstrumenter();
 
     await instrumenter.startInstrumenting();
@@ -81,7 +80,6 @@ export default async function ({
   stats.end = performance.now();
 
   let v8Coverage = undefined;
-
   if (instrumenter) {
     v8Coverage = await instrumenter.stopInstrumenting();
   }

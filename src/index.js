@@ -15,12 +15,6 @@ export default class LightRunner {
     this.#config = config;
     this.#testContext = testContext;
 
-    const { collectCoverage, coverageProvider } = this.#config;
-
-    if (collectCoverage && coverageProvider !== "v8") {
-      throw new Error("Coverage needs v8 coverage provider");
-    }
-
     this.#piscina = new Piscina({
       filename: new URL("./worker-runner.js", import.meta.url).href,
       maxThreads: this.#config.maxWorkers,
@@ -71,7 +65,7 @@ export default class LightRunner {
    * @param {*} onFailure
    */
   runTests(tests, watcher, onStart, onResult, onFailure) {
-    const { updateSnapshot, testNamePattern, collectCoverage } = this.#config;
+    const { updateSnapshot, testNamePattern, collectCoverage, coverageProvider } = this.#config;
 
     return Promise.all(
       tests.map(test => {
@@ -86,7 +80,7 @@ export default class LightRunner {
               updateSnapshot,
               testNamePattern,
               port: mc.port1,
-              collectCoverage,
+              collectV8Coverage: collectCoverage && coverageProvider === "v8",
             },
             { transferList: [mc.port1] }
           )
