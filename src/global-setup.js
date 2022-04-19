@@ -13,6 +13,8 @@ expect.extend({
   toThrowErrorMatchingSnapshot: snapshot.toThrowErrorMatchingSnapshot,
 });
 
+const jestMock = new mock.ModuleMocker(globalThis);
+
 globalThis.expect = expect;
 globalThis.test = circus.test;
 globalThis.it = circus.it;
@@ -22,6 +24,8 @@ globalThis.afterAll = circus.afterAll;
 globalThis.beforeEach = circus.beforeEach;
 globalThis.afterEach = circus.afterEach;
 globalThis.jest = {
-  fn: mock.fn,
-  spyOn: mock.spyOn,
+  fn: jestMock.fn.bind(jestMock),
+  spyOn: jestMock.spyOn.bind(jestMock),
+  clearAllMocks: jestMock.clearAllMocks.bind(jestMock),
+  resetAllMocks: jestMock.resetAllMocks.bind(jestMock),
 };
