@@ -180,7 +180,12 @@ async function runHooks(hook, block, results, stats, ancestors, runInParents) {
     if (type === hook) {
       await callAsync(fn).catch(error => {
         stats.failures++;
-        results.push({ ancestors, title: `(${hook})`, errors:[error], skipped: false });
+        results.push({
+          ancestors,
+          title: `(${hook})`,
+          errors: [error],
+          skipped: false,
+        });
       });
     }
   }
