@@ -13,7 +13,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 - Jest globals: `expect`, `test`, `it`, `describe`, `beforeAll`, `afterAll`, `beforeEach`, `afterEach`
 - Jest function mocks: `jest.fn`, `jest.spyOn`, `jest.clearAllMocks`, `jest.resetAllMocks`
 - Inline and external snapshots
-- Jest cli options: `--testNamePattern`/`-t`, `--maxWorkers`
+- Jest cli options: `--testNamePattern`/`-t`, `--maxWorkers`, `--runInBand`
 - Jest config options: `setupFiles`, `snapshotSerializers`, `maxWorkers`
 
 ### Unsupported Jest features
