@@ -7,6 +7,9 @@ on:
 jobs:
   prettier:
     name: Prettier
+    strategy:
+      matrix:
+        additional-options: ["", "--runInBand"]
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node.js
@@ -31,7 +34,7 @@ jobs:
           yarn config set ignore-engines true
           yarn install --frozen-lockfile
           yarn upgrade jest-light-runner@file:../jest-light-runner
-          yarn test:format
+          yarn test:format ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:
