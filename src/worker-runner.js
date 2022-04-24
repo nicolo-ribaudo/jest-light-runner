@@ -5,6 +5,7 @@ import snapshot from "jest-snapshot";
 import expect from "expect";
 import * as circus from "jest-circus";
 import { inspect } from "util";
+import { isWorkerThread } from "piscina";
 
 import "./global-setup.js";
 
@@ -15,7 +16,7 @@ import "./global-setup.js";
 // process.chdir, that we use multiple times in our tests.
 // We can "polyfill" it for process.cwd() usage, but it
 // won't affect path.* and fs.* functions.
-{
+if (isWorkerThread) {
   const startCwd = process.cwd();
   let cwd = startCwd;
   process.cwd = () => cwd;

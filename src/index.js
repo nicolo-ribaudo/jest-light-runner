@@ -11,9 +11,21 @@ export default class LightRunner {
   constructor(config) {
     this.#config = config;
 
-    this.#piscina = new Piscina({
+    // Jest's logic to decide when to spawn workers and when to run in the
+    // main thread is quite complex:
+    //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts#L13
+    // We will only run in the main thread when `maxWorkers` is 1.
+    // It's always 1 when using the `--runInBand` option.
+    // This is so that the tests shares the same global context as Jest only
+    // when explicitly required, to prevent them from accidentally interferring
+    // with the test runner. Jest's default runner does not have this problem
+    // because it isolates every test in a vm.Context.
+    const { maxWorkers } = config;
+    const runInBand = maxWorkers === 1;
+
+    this.#piscina = new (runInBand ? InBandPiscina : Piscina)({
       filename: new URL("./worker-runner.js", import.meta.url).href,
-      maxThreads: this.#config.maxWorkers,
+      maxThreads: maxWorkers,
       env: {
         // Workers don't have a tty; we whant them to inherit
         // the color support level from the main thread.
@@ -50,5 +62,44 @@ export default class LightRunner {
           );
       })
     );
+  }
+}
+
+// Exposes an API similar to Piscina, but it uses dynamic import()
+// rather than worker_threads.
+class InBandPiscina {
+  #moduleP;
+  #moduleDefault;
+
+  #queue = [];
+  #running = false;
+
+  constructor({ filename }) {
+    this.#moduleP = import(filename);
+  }
+
+  run(data) {
+    return new Promise((resolve, reject) => {
+      this.#queue.push({ data, resolve, reject });
+      this.#runQueue();
+    });
+  }
+
+  async #runQueue() {
+    if (this.#running) return;
+    this.#running = true;
+
+    try {
+      if (!this.#moduleDefault) {
+        this.#moduleDefault = (await this.#moduleP).default;
+      }
+
+      while (this.#queue.length > 0) {
+        const { data, resolve, reject } = this.#queue.shift();
+        await this.#moduleDefault(data).then(resolve, reject);
+      }
+    } finally {
+      this.#running = false;
+    }
   }
 }

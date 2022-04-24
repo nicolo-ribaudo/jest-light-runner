@@ -34,6 +34,9 @@ jobs:
   babel:
     name: Babel
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        additional-options: ["", "--runInBand"]
     steps:
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -62,5 +65,5 @@ jobs:
 
       - name: Test
         run: |
-          yarn jest babel-core babel-preset-env
+          yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
         working-directory: babel
