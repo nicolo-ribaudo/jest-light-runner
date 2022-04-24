@@ -10,44 +10,46 @@ import { isWorkerThread } from "piscina";
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
 
-let needsInitialSetup = true;
-async function initialSetup(projectConfig) {
-  needsInitialSetup = false;
+let initialSetupP;
+function initialSetup(projectConfig) {
+  initialSetupP ||= (async () => {
+    // Node.js workers (worker_threads) don't support
+    // process.chdir, that we use multiple times in our tests.
+    // We can "polyfill" it for process.cwd() usage, but it
+    // won't affect path.* and fs.* functions.
+    if (isWorkerThread) {
+      const startCwd = process.cwd();
+      let cwd = startCwd;
+      process.cwd = () => cwd;
+      process.chdir = dir => {
+        cwd = path.resolve(cwd, dir);
+      };
+    }
 
-  // Node.js workers (worker_threads) don't support
-  // process.chdir, that we use multiple times in our tests.
-  // We can "polyfill" it for process.cwd() usage, but it
-  // won't affect path.* and fs.* functions.
-  if (isWorkerThread) {
-    const startCwd = process.cwd();
-    let cwd = startCwd;
-    process.cwd = () => cwd;
-    process.chdir = dir => {
-      cwd = path.resolve(cwd, dir);
-    };
-  }
+    for (const setupFile of projectConfig.setupFiles) {
+      const { default: setup } = await import(pathToFileURL(setupFile));
+      // https://github.com/facebook/jest/issues/11038
+      if (typeof setup === "function") await setup();
+    }
 
-  for (const setupFile of projectConfig.setupFiles) {
-    const { default: setup } = await import(pathToFileURL(setupFile));
-    // https://github.com/facebook/jest/issues/11038
-    if (typeof setup === "function") await setup();
-  }
+    await import("./global-setup.js");
 
-  await import("./global-setup.js");
+    for (const snapshotSerializer of projectConfig.snapshotSerializers
+      .slice()
+      .reverse()) {
+      const { default: serializer } = await import(
+        pathToFileURL(snapshotSerializer)
+      );
+      snapshot.addSerializer(serializer);
+    }
 
-  for (const snapshotSerializer of projectConfig.snapshotSerializers
-    .slice()
-    .reverse()) {
-    const { default: serializer } = await import(
-      pathToFileURL(snapshotSerializer)
-    );
-    snapshot.addSerializer(serializer);
-  }
+    for (const setupFile of projectConfig.setupFilesAfterEnv) {
+      const { default: setup } = await import(pathToFileURL(setupFile));
+      if (typeof setup === "function") await setup();
+    }
+  })();
 
-  for (const setupFile of projectConfig.setupFilesAfterEnv) {
-    const { default: setup } = await import(pathToFileURL(setupFile));
-    if (typeof setup === "function") await setup();
-  }
+  return initialSetupP;
 }
 
 export default async function run({
@@ -56,7 +58,7 @@ export default async function run({
   testNamePattern,
   port,
 }) {
-  if (needsInitialSetup) initialSetup(test.context.config);
+  await initialSetup(test.context.config);
 
   port.postMessage("start");
 
