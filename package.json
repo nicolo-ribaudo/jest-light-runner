@@ -29,5 +29,6 @@
   "engines": {
     "node": ">=12.20.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "files": ["src"]
 }
