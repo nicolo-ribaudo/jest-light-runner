@@ -5,6 +5,7 @@ import snapshot from "jest-snapshot";
 import expect from "expect";
 import * as circus from "jest-circus";
 import { inspect } from "util";
+import { CoverageInstrumenter } from "collect-v8-coverage";
 
 import "./global-setup.js";
 
@@ -29,6 +30,7 @@ export default async function ({
   updateSnapshot,
   testNamePattern,
   port,
+  collectV8Coverage,
 }) {
   port.postMessage("start");
 
@@ -58,6 +60,13 @@ export default async function ({
   /** @type {Array<InternalTestResult>} */
   const results = [];
 
+  let instrumenter = null;
+  if (collectV8Coverage) {
+    instrumenter = new CoverageInstrumenter();
+
+    await instrumenter.startInstrumenting();
+  }
+
   const { tests, hasFocusedTests } = await loadTests(test.path);
 
   const snapshotState = new snapshot.SnapshotState(
@@ -70,6 +79,11 @@ export default async function ({
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
   stats.end = performance.now();
 
+  let v8Coverage = undefined;
+  if (instrumenter) {
+    v8Coverage = await instrumenter.stopInstrumenting();
+  }
+
   snapshotState._inlineSnapshots.forEach(({ frame }) => {
     // When using native ESM, errors have a URL location.
     // Jest expects paths.
@@ -77,7 +91,7 @@ export default async function ({
   });
   snapshotState.save();
 
-  return toTestResult(stats, results, test);
+  return toTestResult(stats, results, test, v8Coverage);
 }
 
 async function loadTests(testFile) {
@@ -216,9 +230,10 @@ function callAsync(fn) {
  * @param {Stats} stats
  * @param {Array<InternalTestResult>} tests
  * @param {import("@jest/test-result").Test} testInput
+ * @param {import("@jest/test-result").V8CoverageResult} v8Coverage
  * @returns {import("@jest/test-result").TestResult}
  */
-function toTestResult(stats, tests, { path, context }) {
+function toTestResult(stats, tests, { path, context }, v8Coverage) {
   const { start, end } = stats;
   const runtime = end - start;
 
@@ -265,6 +280,7 @@ function toTestResult(stats, tests, { path, context }) {
         title: test.title,
       };
     }),
+    v8Coverage,
   };
 }
 
