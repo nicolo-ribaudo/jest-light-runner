@@ -11,9 +11,12 @@ export default class LightRunner {
   constructor(config) {
     this.#config = config;
 
-    this.#piscina = new Piscina({
+    const { maxWorkers } = config;
+    const runInBand = maxWorkers === 1;
+
+    this.#piscina = new (runInBand ? InBandPiscina : Piscina)({
       filename: new URL("./worker-runner.js", import.meta.url).href,
-      maxThreads: this.#config.maxWorkers,
+      maxThreads: maxWorkers,
       env: {
         // Workers don't have a tty; we whant them to inherit
         // the color support level from the main thread.
@@ -50,5 +53,44 @@ export default class LightRunner {
           );
       })
     );
+  }
+}
+
+// Exposes an API similar to Piscina, but it uses dynamic import()
+// rather than worker_threads.
+class InBandPiscina {
+  #moduleP;
+  #moduleDefault;
+
+  #queue = [];
+  #running = false;
+
+  constructor({ filename }) {
+    this.#moduleP = import(filename);
+  }
+
+  run(data) {
+    return new Promise((resolve, reject) => {
+      this.#queue.push({ data, resolve, reject });
+      this.#runQueue();
+    });
+  }
+
+  async #runQueue() {
+    if (this.#running) return;
+    this.#running = true;
+
+    try {
+      if (!this.#moduleDefault) {
+        this.#moduleDefault = (await this.#moduleP).default;
+      }
+
+      while (this.#queue.length > 0) {
+        const { data, resolve, reject } = this.#queue.shift();
+        await this.#moduleDefault(data).then(resolve, reject);
+      }
+    } finally {
+      this.#running = false;
+    }
   }
 }
