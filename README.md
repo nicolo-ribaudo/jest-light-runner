@@ -14,7 +14,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 - Jest function mocks: `jest.fn`, `jest.spyOn`, `jest.clearAllMocks`, `jest.resetAllMocks`
 - Inline and external snapshots
 - Jest cli options: `--testNamePattern`/`-t`, `--maxWorkers`, `--runInBand`
-- Jest config options: `setupFiles`, `snapshotSerializers`, `maxWorkers`
+- Jest config options: `setupFiles`, `snapshotSerializers`, `maxWorkers`, `snapshotFormat`
 
 ### Unsupported Jest features
 

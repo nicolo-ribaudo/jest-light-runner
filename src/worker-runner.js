@@ -33,7 +33,8 @@ export default async function ({
 }) {
   port.postMessage("start");
 
-  const { setupFiles, snapshotSerializers } = test.context.config;
+  const { setupFiles, snapshotSerializers, snapshotFormat } =
+    test.context.config;
 
   // https://github.com/facebook/jest/issues/11038
   for (const setupFile of setupFiles) {
@@ -63,7 +64,7 @@ export default async function ({
 
   const snapshotState = new snapshot.SnapshotState(
     `${path.dirname(test.path)}/__snapshots__/${path.basename(test.path)}.snap`,
-    { prettierPath: "prettier", updateSnapshot }
+    { prettierPath: "prettier", updateSnapshot, snapshotFormat }
   );
   expect.setState({ snapshotState });
 
