@@ -28,11 +28,11 @@ jobs:
 
       - name: Run tests
         run: |
-          cd prettier
           yarn config set ignore-engines true
           yarn install --frozen-lockfile
           yarn upgrade jest-light-runner@file:../jest-light-runner
           yarn test:format
+        working-directory: prettier
 
   babel:
     name: Babel
