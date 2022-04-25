@@ -5,15 +5,16 @@ import { MessageChannel } from "worker_threads";
 /** @typedef {import("@jest/test-result").Test} Test */
 
 export default class LightRunner {
-  #config;
-  #piscina;
+  // TODO: Use private field when we drop support for Node.js v12
+  _config;
+  _piscina;
 
   constructor(config) {
-    this.#config = config;
+    this._config = config;
 
     // Jest's logic to decide when to spawn workers and when to run in the
     // main thread is quite complex:
-    //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts#L13
+    //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts_L13
     // We will only run in the main thread when `maxWorkers` is 1.
     // It's always 1 when using the `--runInBand` option.
     // This is so that the tests shares the same global context as Jest only
@@ -23,7 +24,7 @@ export default class LightRunner {
     const { maxWorkers } = config;
     const runInBand = maxWorkers === 1;
 
-    this.#piscina = new (runInBand ? InBandPiscina : Piscina)({
+    this._piscina = new (runInBand ? InBandPiscina : Piscina)({
       filename: new URL("./worker-runner.js", import.meta.url).href,
       maxThreads: maxWorkers,
       env: {
@@ -43,7 +44,7 @@ export default class LightRunner {
    * @param {*} onFailure
    */
   runTests(tests, watcher, onStart, onResult, onFailure) {
-    const { updateSnapshot, testNamePattern } = this.#config;
+    const { updateSnapshot, testNamePattern } = this._config;
 
     return Promise.all(
       tests.map(test => {
@@ -51,7 +52,7 @@ export default class LightRunner {
         mc.port2.onmessage = () => onStart(test);
         mc.port2.unref();
 
-        return this.#piscina
+        return this._piscina
           .run(
             { test, updateSnapshot, testNamePattern, port: mc.port1 },
             { transferList: [mc.port1] }
@@ -68,38 +69,38 @@ export default class LightRunner {
 // Exposes an API similar to Piscina, but it uses dynamic import()
 // rather than worker_threads.
 class InBandPiscina {
-  #moduleP;
-  #moduleDefault;
+  _moduleP;
+  _moduleDefault;
 
-  #queue = [];
-  #running = false;
+  _queue = [];
+  _running = false;
 
   constructor({ filename }) {
-    this.#moduleP = import(filename);
+    this._moduleP = import(filename);
   }
 
   run(data) {
     return new Promise((resolve, reject) => {
-      this.#queue.push({ data, resolve, reject });
-      this.#runQueue();
+      this._queue.push({ data, resolve, reject });
+      this._runQueue();
     });
   }
 
-  async #runQueue() {
-    if (this.#running) return;
-    this.#running = true;
+  async _runQueue() {
+    if (this._running) return;
+    this._running = true;
 
     try {
-      if (!this.#moduleDefault) {
-        this.#moduleDefault = (await this.#moduleP).default;
+      if (!this._moduleDefault) {
+        this._moduleDefault = (await this._moduleP).default;
       }
 
-      while (this.#queue.length > 0) {
-        const { data, resolve, reject } = this.#queue.shift();
-        await this.#moduleDefault(data).then(resolve, reject);
+      while (this._queue.length > 0) {
+        const { data, resolve, reject } = this._queue.shift();
+        await this._moduleDefault(data).then(resolve, reject);
       }
     } finally {
-      this.#running = false;
+      this._running = false;
     }
   }
 }
