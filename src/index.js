@@ -5,7 +5,7 @@ import { MessageChannel } from "worker_threads";
 /** @typedef {import("@jest/test-result").Test} Test */
 
 export default class LightRunner {
-  // TODO: Use private field when we drop support for Node.js v12
+  // TODO: Use real private fields when we drop support for Node.js v12
   _config;
   _piscina;
 
