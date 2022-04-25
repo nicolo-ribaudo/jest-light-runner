@@ -14,7 +14,7 @@ export default class LightRunner {
 
     // Jest's logic to decide when to spawn workers and when to run in the
     // main thread is quite complex:
-    //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts_L13
+    //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts#L13
     // We will only run in the main thread when `maxWorkers` is 1.
     // It's always 1 when using the `--runInBand` option.
     // This is so that the tests shares the same global context as Jest only
