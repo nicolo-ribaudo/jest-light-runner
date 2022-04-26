@@ -10,47 +10,42 @@ import { isWorkerThread } from "piscina";
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
 
-let initialSetupP;
-function initialSetup(projectConfig) {
-  initialSetupP ||= (async () => {
-    // Node.js workers (worker_threads) don't support
-    // process.chdir, that we use multiple times in our tests.
-    // We can "polyfill" it for process.cwd() usage, but it
-    // won't affect path.* and fs.* functions.
-    if (isWorkerThread) {
-      const startCwd = process.cwd();
-      let cwd = startCwd;
-      process.cwd = () => cwd;
-      process.chdir = dir => {
-        cwd = path.resolve(cwd, dir);
-      };
-    }
+const initialSetup = once(async (projectConfig) => {
+  // Node.js workers (worker_threads) don't support
+  // process.chdir, that we use multiple times in our tests.
+  // We can "polyfill" it for process.cwd() usage, but it
+  // won't affect path.* and fs.* functions.
+  if (isWorkerThread) {
+    const startCwd = process.cwd();
+    let cwd = startCwd;
+    process.cwd = () => cwd;
+    process.chdir = dir => {
+      cwd = path.resolve(cwd, dir);
+    };
+  }
 
-    for (const setupFile of projectConfig.setupFiles) {
-      const { default: setup } = await import(pathToFileURL(setupFile));
-      // https://github.com/facebook/jest/issues/11038
-      if (typeof setup === "function") await setup();
-    }
+  for (const setupFile of projectConfig.setupFiles) {
+    const { default: setup } = await import(pathToFileURL(setupFile));
+    // https://github.com/facebook/jest/issues/11038
+    if (typeof setup === "function") await setup();
+  }
 
-    await import("./global-setup.js");
+  await import("./global-setup.js");
 
-    for (const snapshotSerializer of projectConfig.snapshotSerializers
-      .slice()
-      .reverse()) {
-      const { default: serializer } = await import(
-        pathToFileURL(snapshotSerializer)
-      );
-      snapshot.addSerializer(serializer);
-    }
+  for (const snapshotSerializer of projectConfig.snapshotSerializers
+    .slice()
+    .reverse()) {
+    const { default: serializer } = await import(
+      pathToFileURL(snapshotSerializer)
+    );
+    snapshot.addSerializer(serializer);
+  }
 
-    for (const setupFile of projectConfig.setupFilesAfterEnv) {
-      const { default: setup } = await import(pathToFileURL(setupFile));
-      if (typeof setup === "function") await setup();
-    }
-  })();
-
-  return initialSetupP;
-}
+  for (const setupFile of projectConfig.setupFilesAfterEnv) {
+    const { default: setup } = await import(pathToFileURL(setupFile));
+    if (typeof setup === "function") await setup();
+  }
+});
 
 export default async function run({
   test,
@@ -74,7 +69,11 @@ export default async function run({
 
   const snapshotState = new snapshot.SnapshotState(
     `${path.dirname(test.path)}/__snapshots__/${path.basename(test.path)}.snap`,
-    { prettierPath: "prettier", updateSnapshot, snapshotFormat: test.context.config.snapshotFormat }
+    {
+      prettierPath: "prettier",
+      updateSnapshot,
+      snapshotFormat: test.context.config.snapshotFormat,
+    }
   );
   expect.setState({ snapshotState });
 
@@ -287,4 +286,15 @@ function failureToString(test) {
     test.errors.map(error => inspect(error).replace(/^/gm, "    ")).join("\n") +
     "\n"
   );
+}
+
+function once(fn) {
+  let called = false;
+  let result;
+  return function () {
+    if (called) return result;
+    called = true;
+    result = fn.apply(this, arguments);
+    return result;
+  };
 }
