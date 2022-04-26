@@ -16,7 +16,6 @@ const initialSetup = once(async projectConfig => {
   // We can "polyfill" it for process.cwd() usage, but it
   // won't affect path.* and fs.* functions.
   if (isWorkerThread) {
-    console.log("---------------------------------------I'm a worker!-------------------------------");
     const startCwd = process.cwd();
     let cwd = startCwd;
     process.cwd = () => cwd;
