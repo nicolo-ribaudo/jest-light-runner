@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Setup Node.js
         uses: actions/setup-node@v3
+        with:
+          node-version: "12"
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -26,10 +28,11 @@ jobs:
 
       - name: Run tests
         run: |
-          cd prettier
+          yarn config set ignore-engines true
           yarn install --frozen-lockfile
           yarn upgrade jest-light-runner@file:../jest-light-runner
           yarn test:format
+        working-directory: prettier
 
   babel:
     name: Babel
