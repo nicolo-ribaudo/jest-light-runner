@@ -10,7 +10,7 @@ import { isWorkerThread } from "piscina";
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
 
-const initialSetup = once(async (projectConfig) => {
+const initialSetup = once(async projectConfig => {
   // Node.js workers (worker_threads) don't support
   // process.chdir, that we use multiple times in our tests.
   // We can "polyfill" it for process.cwd() usage, but it
