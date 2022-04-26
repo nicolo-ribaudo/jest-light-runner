@@ -69,6 +69,11 @@ jobs:
           yarn up jest-light-runner@file:../jest-light-runner
         working-directory: babel
 
+      - name: Disable Babel's setupFilesAfterEnv
+        run: |
+          echo "" > test/testSetupFile.js
+        working-directory: babel
+
       - name: Test
         run: |
           yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
