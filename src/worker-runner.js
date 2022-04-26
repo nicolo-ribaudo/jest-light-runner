@@ -7,50 +7,55 @@ import * as circus from "jest-circus";
 import { inspect } from "util";
 import { isWorkerThread } from "piscina";
 
-import "./global-setup.js";
-
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
 
-// Node.js workers (worker_threads) don't support
-// process.chdir, that we use multiple times in our tests.
-// We can "polyfill" it for process.cwd() usage, but it
-// won't affect path.* and fs.* functions.
-if (isWorkerThread) {
-  const startCwd = process.cwd();
-  let cwd = startCwd;
-  process.cwd = () => cwd;
-  process.chdir = dir => {
-    cwd = path.resolve(cwd, dir);
-  };
-}
-
-export default async function ({
-  test,
-  updateSnapshot,
-  testNamePattern,
-  port,
-}) {
-  port.postMessage("start");
-
-  const { setupFiles, snapshotSerializers, snapshotFormat } =
-    test.context.config;
-
-  // https://github.com/facebook/jest/issues/11038
-  for (const setupFile of setupFiles) {
-    const { default: setup } = await import(pathToFileURL(setupFile));
-
-    if (typeof setup === "function") {
-      await setup();
-    }
+const initialSetup = once(async projectConfig => {
+  // Node.js workers (worker_threads) don't support
+  // process.chdir, that we use multiple times in our tests.
+  // We can "polyfill" it for process.cwd() usage, but it
+  // won't affect path.* and fs.* functions.
+  if (isWorkerThread) {
+    const startCwd = process.cwd();
+    let cwd = startCwd;
+    process.cwd = () => cwd;
+    process.chdir = dir => {
+      cwd = path.resolve(cwd, dir);
+    };
   }
 
-  for (const snapshotSerializer of [...snapshotSerializers].reverse()) {
+  for (const setupFile of projectConfig.setupFiles) {
+    const { default: setup } = await import(pathToFileURL(setupFile));
+    // https://github.com/facebook/jest/issues/11038
+    if (typeof setup === "function") await setup();
+  }
+
+  await import("./global-setup.js");
+
+  for (const snapshotSerializer of projectConfig.snapshotSerializers
+    .slice()
+    .reverse()) {
     const { default: serializer } = await import(
       pathToFileURL(snapshotSerializer)
     );
     snapshot.addSerializer(serializer);
   }
+
+  for (const setupFile of projectConfig.setupFilesAfterEnv) {
+    const { default: setup } = await import(pathToFileURL(setupFile));
+    if (typeof setup === "function") await setup();
+  }
+});
+
+export default async function run({
+  test,
+  updateSnapshot,
+  testNamePattern,
+  port,
+}) {
+  await initialSetup(test.context.config);
+
+  port.postMessage("start");
 
   const testNamePatternRE =
     testNamePattern != null ? new RegExp(testNamePattern, "i") : null;
@@ -64,7 +69,11 @@ export default async function ({
 
   const snapshotState = new snapshot.SnapshotState(
     `${path.dirname(test.path)}/__snapshots__/${path.basename(test.path)}.snap`,
-    { prettierPath: "prettier", updateSnapshot, snapshotFormat }
+    {
+      prettierPath: "prettier",
+      updateSnapshot,
+      snapshotFormat: test.context.config.snapshotFormat,
+    }
   );
   expect.setState({ snapshotState });
 
@@ -277,4 +286,15 @@ function failureToString(test) {
     test.errors.map(error => inspect(error).replace(/^/gm, "    ")).join("\n") +
     "\n"
   );
+}
+
+function once(fn) {
+  let called = false;
+  let result;
+  return function () {
+    if (called) return result;
+    called = true;
+    result = fn.apply(this, arguments);
+    return result;
+  };
 }
