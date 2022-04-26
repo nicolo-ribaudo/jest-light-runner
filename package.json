@@ -1,6 +1,6 @@
 {
   "name": "jest-light-runner",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "A Jest runner that runs tests directly in bare Node.js, without virtualizing the environment.",
   "author": "Nicolò Ribaudo (https://github.com/nicolo-ribaudo)",
   "repository": "nicolo-ribaudo/jest-light-runner",
