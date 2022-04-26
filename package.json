@@ -12,7 +12,7 @@
     "lint": "yarn prettier . --ignore-unknown --check"
   },
   "dependencies": {
-    "expect": "^28.0.0",
+    "expect": "^28.0.1",
     "jest-circus": "^28.0.0",
     "jest-each": "^28.0.0",
     "jest-mock": "^28.0.0",
@@ -24,7 +24,7 @@
     "prettier": "^2.6.2"
   },
   "peerDependencies": {
-    "jest": "^28.0.0"
+    "jest": "^27.0.0 || ^28.0.0"
   },
   "engines": {
     "node": ">=12.20.0"
