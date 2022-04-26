@@ -1,7 +1,7 @@
 /* eslint-disable import/extensions */
 
 import mock from "jest-mock";
-import expect from "expect";
+import { expect } from "expect";
 import snapshot from "jest-snapshot";
 import * as circus from "jest-circus";
 
