@@ -21,6 +21,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 - `import`/`require` mocks. You can use a custom mocking library such as [`esmock`](https://github.com/iambumblehead/esmock) or [`proxyquire`](https://github.com/thlorenz/proxyquire).
 - On-the-fly compilation (for example, with Babel or TypeScript). You can use a Node.js module loader, such as [`ts-node/esm`](https://github.com/TypeStrong/ts-node).
 - Tests isolation. Jest runs every test file in its own global environment, meaning that modification to built-ins done in one test file don't affect other test files. This is not supported, but you can use the Node.js option [`--frozen-intrinsics`](https://nodejs.org/api/cli.html#--frozen-intrinsics) to prevent such modifications.
+- `import.meta.jest`. You can use the `jest` global instead.
 
 ### Partially supported features
 
