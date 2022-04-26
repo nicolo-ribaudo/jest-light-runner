@@ -9,7 +9,7 @@ jobs:
     name: Prettier
     strategy:
       matrix:
-        additional-options: ["", "--runInBand"]
+        additional-options: ["--maxWorkers=2", "--runInBand"]
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node.js
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        additional-options: ["", "--runInBand"]
+        additional-options: ["--maxWorkers=2", "--runInBand"]
     steps:
       - name: Setup Node.js
         uses: actions/setup-node@v3
