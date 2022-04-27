@@ -12,6 +12,7 @@ expect.extend({
     snapshot.toThrowErrorMatchingInlineSnapshot,
   toThrowErrorMatchingSnapshot: snapshot.toThrowErrorMatchingSnapshot,
 });
+expect.addSnapshotSerializer = snapshot.addSerializer;
 
 const jestMock = new mock.ModuleMocker(globalThis);
 
