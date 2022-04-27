@@ -1,18 +1,9 @@
 /* eslint-disable import/extensions */
 
 import mock from "jest-mock";
-import { expect } from "expect";
+import { jestExpect as expect } from "@jest/expect";
 import snapshot from "jest-snapshot";
 import * as circus from "jest-circus";
-
-expect.extend({
-  toMatchInlineSnapshot: snapshot.toMatchInlineSnapshot,
-  toMatchSnapshot: snapshot.toMatchSnapshot,
-  toThrowErrorMatchingInlineSnapshot:
-    snapshot.toThrowErrorMatchingInlineSnapshot,
-  toThrowErrorMatchingSnapshot: snapshot.toThrowErrorMatchingSnapshot,
-});
-expect.addSnapshotSerializer = snapshot.addSerializer;
 
 const jestMock = new mock.ModuleMocker(globalThis);
 

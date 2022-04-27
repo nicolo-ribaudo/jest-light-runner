@@ -13,7 +13,7 @@
     "lint": "yarn prettier . --check"
   },
   "dependencies": {
-    "expect": "^28.0.1",
+    "@jest/expect": "^28.0.2",
     "jest-circus": "^28.0.0",
     "jest-each": "^28.0.0",
     "jest-mock": "^28.0.0",
