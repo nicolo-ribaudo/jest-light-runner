@@ -6,6 +6,9 @@ import { expect } from "expect";
 import * as circus from "jest-circus";
 import { inspect } from "util";
 import { isWorkerThread } from "piscina";
+import createEsmUtils from "esm-utils";
+
+const { importModule } = createEsmUtils(import.meta.url);
 
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
@@ -93,7 +96,7 @@ export default async function run({
 
 async function loadTests(testFile) {
   circus.resetState();
-  await import(pathToFileURL(testFile));
+  await importModule(testFile, { traceSyntaxError: true });
   const { rootDescribeBlock, hasFocusedTests } = circus.getState();
   return { tests: rootDescribeBlock, hasFocusedTests };
 }

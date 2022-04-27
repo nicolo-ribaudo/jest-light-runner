@@ -13,6 +13,7 @@
     "lint": "yarn prettier . --check"
   },
   "dependencies": {
+    "esm-utils": "^3.1.0",
     "expect": "^28.0.1",
     "jest-circus": "^28.0.0",
     "jest-each": "^28.0.0",

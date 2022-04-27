@@ -1199,6 +1199,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esm-utils@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "esm-utils@npm:3.1.0"
+  dependencies:
+    url-or-path: 2.1.0
+  checksum: 3f383b877d66c0439b340ae1abc403244629cd0cbacdbcda2915b0df6516446c94eeeb73460bc6b7270127f7ade85d9e555853e312e5c5d9bf0896a9dd038fad
+  languageName: node
+  linkType: hard
+
 "esprima@npm:^4.0.0":
   version: 4.0.1
   resolution: "esprima@npm:4.0.1"
@@ -1691,6 +1700,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "jest-light-runner@workspace:."
   dependencies:
+    esm-utils: ^3.1.0
     expect: ^28.0.1
     jest-circus: ^28.0.0
     jest-each: ^28.0.0
@@ -2761,6 +2771,13 @@ __metadata:
   dependencies:
     imurmurhash: ^0.1.4
   checksum: 5b6876a645da08d505dedb970d1571f6cebdf87044cb6b740c8dbb24f0d6e1dc8bdbf46825fd09f994d7cf50760e6f6e063cfa197d51c5902c00a861702eb75a
+  languageName: node
+  linkType: hard
+
+"url-or-path@npm:2.1.0":
+  version: 2.1.0
+  resolution: "url-or-path@npm:2.1.0"
+  checksum: 8bbc00439fe7bc4ce8c3cb92d80a5b8b4925d4709a210116c6996cf17135e361b97233f7abbd7dd09ea00684fc0043c8ae9abfd62fc20b648419bc2cd01bc219
   languageName: node
   linkType: hard
 
