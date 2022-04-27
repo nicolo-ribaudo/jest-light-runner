@@ -12,11 +12,6 @@ jobs:
         additional-options: ["--maxWorkers=2", "--runInBand"]
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "12"
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -29,12 +24,25 @@ jobs:
           ref: next
           path: prettier
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+
+      - name: Build
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+        working-directory: prettier
+
+      - name: Setup Node.js v12
+        uses: actions/setup-node@v3
+        with:
+          node-version: "12"
+
       - name: Run tests
         run: |
-          yarn config set ignore-engines true
           yarn install --frozen-lockfile
+          yarn config set ignore-engines true
           yarn upgrade jest-light-runner@file:../jest-light-runner
-          yarn build
           yarn test:dist tests/format ${{ matrix.additional-options }}
         working-directory: prettier
 
