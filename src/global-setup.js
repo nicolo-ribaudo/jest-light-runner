@@ -2,7 +2,6 @@
 
 import mock from "jest-mock";
 import { jestExpect as expect } from "@jest/expect";
-import snapshot from "jest-snapshot";
 import * as circus from "jest-circus";
 
 const jestMock = new mock.ModuleMocker(globalThis);
