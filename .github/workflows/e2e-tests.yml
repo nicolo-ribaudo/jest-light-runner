@@ -40,8 +40,8 @@ jobs:
 
       - name: Run tests
         run: |
-          yarn install --frozen-lockfile
           yarn config set ignore-engines true
+          yarn install --frozen-lockfile
           yarn upgrade jest-light-runner@file:../jest-light-runner
           yarn test:dist tests/format ${{ matrix.additional-options }}
         working-directory: prettier
