@@ -67,8 +67,11 @@ export default async function run({
 
   const { tests, hasFocusedTests } = await loadTests(test.path);
 
+  const snapshotResolver = await snapshot.buildSnapshotResolver(
+    test.context.config
+  );
   const snapshotState = new snapshot.SnapshotState(
-    `${path.dirname(test.path)}/__snapshots__/${path.basename(test.path)}.snap`,
+    snapshotResolver.resolveSnapshotPath(test.path),
     {
       prettierPath: "prettier",
       updateSnapshot,
