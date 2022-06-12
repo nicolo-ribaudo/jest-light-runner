@@ -19,4 +19,5 @@ globalThis.jest = {
   spyOn: jestMock.spyOn.bind(jestMock),
   clearAllMocks: jestMock.clearAllMocks.bind(jestMock),
   resetAllMocks: jestMock.resetAllMocks.bind(jestMock),
+  restoreAllMocks: jestMock.restoreAllMocks.bind(jestMock),
 };
