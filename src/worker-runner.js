@@ -190,6 +190,10 @@ async function runTest(fn, stats, results, ancestors, name) {
 }
 
 async function runHooks(hook, block, results, stats, ancestors, runInParents) {
+  if (hook.startsWith("before") && block.parent && runInParents) {
+    await runHooks(hook, block.parent, results, stats, ancestors, true);
+  }
+
   for (const { type, fn } of block.hooks) {
     if (type === hook) {
       await callAsync(fn).catch(error => {
@@ -204,7 +208,7 @@ async function runHooks(hook, block, results, stats, ancestors, runInParents) {
     }
   }
 
-  if (block.parent && runInParents) {
+  if (hook.startsWith("after") && block.parent && runInParents) {
     await runHooks(hook, block.parent, results, stats, ancestors, true);
   }
 }
