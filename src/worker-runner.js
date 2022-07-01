@@ -96,7 +96,7 @@ export default async function run({
 
 async function loadTests(testFile) {
   circus.resetState();
-  await import(pathToFileURL(testFile)+"?"+Date.now());
+  await import(pathToFileURL(testFile) + "?" + Date.now());
   const { rootDescribeBlock, hasFocusedTests } = circus.getState();
   return { tests: rootDescribeBlock, hasFocusedTests };
 }
