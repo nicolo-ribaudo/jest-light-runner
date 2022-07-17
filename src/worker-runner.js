@@ -117,8 +117,9 @@ async function runTestBlock(
 
     if (
       mode === "skip" ||
-      (hasFocusedTests && type === "test" && mode !== "only") ||
-      shouldSkip(testNamePatternRE, getFullName(nextAncestors))
+      (type === "test" &&
+        ((hasFocusedTests && mode !== "only") ||
+          shouldSkip(testNamePatternRE, getFullName(nextAncestors))))
     ) {
       stats.pending++;
       results.push({ ancestors, title: name, errors: [], skipped: true });
