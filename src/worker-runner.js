@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { performance } from "perf_hooks";
-import snapshot from "jest-snapshot";
+import * as snapshot from "jest-snapshot";
 import { expect } from "expect";
 import * as circus from "jest-circus";
 import { inspect } from "util";
@@ -54,6 +54,7 @@ export default async function run({
   port,
 }) {
   await initialSetup(test.context.config);
+  const globalSnapshotSerializers = [...snapshot.getSerializers()];
 
   port.postMessage("start");
 
@@ -90,6 +91,12 @@ export default async function run({
     frame.file = fileURLToPath(frame.file);
   });
   snapshotState.save();
+  const snapshotSerializers = snapshot.getSerializers();
+  snapshotSerializers.splice(
+    0,
+    snapshotSerializers.length,
+    ...globalSnapshotSerializers
+  );
 
   return toTestResult(stats, results, test);
 }
