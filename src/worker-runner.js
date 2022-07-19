@@ -92,7 +92,11 @@ export default async function run({
   });
   snapshotState.save();
   const snapshotSerializers = snapshot.getSerializers();
-  snapshotSerializers.splice(0, snapshotSerializers.length, ...snapshotSerializersBackup);
+  snapshotSerializers.splice(
+    0,
+    snapshotSerializers.length,
+    ...snapshotSerializersBackup
+  );
 
   return toTestResult(stats, results, test);
 }

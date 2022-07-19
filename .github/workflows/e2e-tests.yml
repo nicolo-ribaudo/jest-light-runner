@@ -33,10 +33,10 @@ jobs:
           yarn build
         working-directory: prettier
 
-      - name: Setup Node.js v12
+      - name: Setup Node.js v14
         uses: actions/setup-node@v3
         with:
-          node-version: "12"
+          node-version: "14"
 
       - name: Run tests
         run: |
