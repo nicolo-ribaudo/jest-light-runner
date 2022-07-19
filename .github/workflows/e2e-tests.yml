@@ -29,7 +29,7 @@ jobs:
 
       - name: Build
         run: |
-          yarn install --frozen-lockfile
+          yarn install --immutable
           yarn build
         working-directory: prettier
 
@@ -38,11 +38,13 @@ jobs:
         with:
           node-version: "14"
 
+      - name: Update jest-light-runner
+        run: |
+          yarn up jest-light-runner@file:../jest-light-runner
+        working-directory: prettier
+
       - name: Run tests
         run: |
-          yarn config set ignore-engines true
-          yarn install --frozen-lockfile
-          yarn upgrade jest-light-runner@file:../jest-light-runner
           yarn test:dist tests/format ${{ matrix.additional-options }}
         working-directory: prettier
 

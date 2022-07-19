@@ -103,7 +103,7 @@ export default async function run({
 
 async function loadTests(testFile) {
   circus.resetState();
-  await import(pathToFileURL(testFile));
+  await import(pathToFileURL(testFile) + "?" + Date.now());
   const { rootDescribeBlock, hasFocusedTests } = circus.getState();
   return { tests: rootDescribeBlock, hasFocusedTests };
 }
@@ -124,8 +124,9 @@ async function runTestBlock(
 
     if (
       mode === "skip" ||
-      (hasFocusedTests && type === "test" && mode !== "only") ||
-      shouldSkip(testNamePatternRE, getFullName(nextAncestors))
+      (type === "test" &&
+        ((hasFocusedTests && mode !== "only") ||
+          shouldSkip(testNamePatternRE, getFullName(nextAncestors))))
     ) {
       stats.pending++;
       results.push({ ancestors, title: name, errors: [], skipped: true });
@@ -197,6 +198,10 @@ async function runTest(fn, stats, results, ancestors, name) {
 }
 
 async function runHooks(hook, block, results, stats, ancestors, runInParents) {
+  if (hook.startsWith("before") && block.parent && runInParents) {
+    await runHooks(hook, block.parent, results, stats, ancestors, true);
+  }
+
   for (const { type, fn } of block.hooks) {
     if (type === hook) {
       await callAsync(fn).catch(error => {
@@ -211,7 +216,7 @@ async function runHooks(hook, block, results, stats, ancestors, runInParents) {
     }
   }
 
-  if (block.parent && runInParents) {
+  if (hook.startsWith("after") && block.parent && runInParents) {
     await runHooks(hook, block.parent, results, stats, ancestors, true);
   }
 }
