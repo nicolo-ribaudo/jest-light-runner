@@ -54,7 +54,7 @@ export default async function run({
   port,
 }) {
   await initialSetup(test.context.config);
-  const snapshotSerializersBackup = [...snapshot.getSerializers()];
+  const globalSnapshotSerializers = [...snapshot.getSerializers()];
 
   port.postMessage("start");
 
@@ -95,7 +95,7 @@ export default async function run({
   snapshotSerializers.splice(
     0,
     snapshotSerializers.length,
-    ...snapshotSerializersBackup
+    ...globalSnapshotSerializers
   );
 
   return toTestResult(stats, results, test);
