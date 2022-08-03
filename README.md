@@ -60,20 +60,25 @@ module.exports = {
 
 ### Using custom Node.js ESM loaders
 
-You can specify custom ESM loaders using Node.js's [`--loader`](https://nodejs.org/api/cli.html#--loadermodule) option. Jest's CLI doesn't allow providing Node.js-specific options, but you can do it in two alternative ways:
+You can specify custom ESM loaders using Node.js's [`--loader`](https://nodejs.org/api/cli.html#--loadermodule) option. Jest's CLI doesn't allow providing Node.js-specific options, but you can do it by using the [`NODE_OPTIONS`](https://nodejs.org/docs/latest-v17.x/api/cli.html#node_optionsoptions) environment variable:
 
-1. Run Jest by explicitly running Node.js:
-   ```
-   node --loader ts-node/esm ./node_modules/.bin/jest
-   ```
-2. Use the [`NODE_OPTIONS`](https://nodejs.org/docs/latest-v17.x/api/cli.html#node_optionsoptions) environment variable:
-   ```
-   NODE_OPTIONS='--loader ts-node/esm' jest
-   ```
-   or, if you are using [`cross-env`](https://www.npmjs.com/package/cross-env) to be able to provide environment variables on multiple OSes:
-   ```
-   cross-env NODE_OPTIONS='--loader ts-node/esm' jest
-   ```
+```bash
+NODE_OPTIONS='--loader ts-node/esm' jest
+```
+
+Or, if you are using [`cross-env`](https://www.npmjs.com/package/cross-env) to be able to provide environment variables on multiple OSes:
+
+```bash
+cross-env NODE_OPTIONS='--loader ts-node/esm' jest
+```
+
+**Don't** run Node.js directly:
+
+```bash
+node --loader ts-node/esm ./node_modules/.bin/jest
+```
+
+This will result in `ERR_UNKNOWN_FILE_EXTENSION`, due to the loader argument not being passed to the sub-processes. This is a [known limitation](https://github.com/TypeStrong/ts-node/issues/1062#issuecomment-1143518446), and ts-node documentation [recommends using NODE_OPTIONS](https://typestrong.org/ts-node/docs/usage/#node-flags-and-other-tools).
 
 ## Stability
 
