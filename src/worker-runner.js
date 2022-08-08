@@ -1,7 +1,7 @@
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { performance } from "perf_hooks";
-import snapshot from "jest-snapshot";
+import * as snapshot from "jest-snapshot";
 import { expect } from "expect";
 import * as circus from "jest-circus";
 import { inspect } from "util";
@@ -45,6 +45,8 @@ const initialSetup = once(async projectConfig => {
     const { default: setup } = await import(pathToFileURL(setupFile));
     if (typeof setup === "function") await setup();
   }
+
+  return snapshot.getSerializers().slice();
 });
 
 export default async function run({
@@ -53,7 +55,7 @@ export default async function run({
   testNamePattern,
   port,
 }) {
-  await initialSetup(test.context.config);
+  const projectSnapshotSerializers = await initialSetup(test.context.config);
 
   port.postMessage("start");
 
@@ -90,6 +92,10 @@ export default async function run({
     frame.file = fileURLToPath(frame.file);
   });
   snapshotState.save();
+
+  // Restore the project-level serializers, so that serializers
+  // installed by one test file don't leak to other files.
+  arrayReplace(snapshot.getSerializers(), projectSnapshotSerializers);
 
   return toTestResult(stats, results, test);
 }
@@ -305,4 +311,8 @@ function once(fn) {
     result = fn.apply(this, arguments);
     return result;
   };
+}
+
+function arrayReplace(array, replacement) {
+  array.splice(0, array.length, ...replacement);
 }
