@@ -9,7 +9,7 @@ jobs:
     name: Prettier
     strategy:
       matrix:
-        additional-options: ["--maxWorkers=2", "--runInBand"]
+        additional-options: ["--runInBand"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
