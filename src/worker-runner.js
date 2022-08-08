@@ -78,7 +78,7 @@ export default async function run({
       snapshotFormat: test.context.config.snapshotFormat,
     }
   );
-  expect.setState({ snapshotState });
+  expect.setState({ snapshotState, testPath: test.path });
 
   stats.start = performance.now();
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
