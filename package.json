@@ -13,11 +13,11 @@
     "lint": "yarn prettier . --check"
   },
   "dependencies": {
-    "@jest/expect": "^29.0.0",
-    "jest-circus": "^29.0.0",
-    "jest-each": "^29.0.0",
-    "jest-mock": "^29.0.0",
-    "jest-snapshot": "^29.0.0",
+    "@jest/expect": "^29.0.1",
+    "jest-circus": "^29.0.1",
+    "jest-each": "^29.0.1",
+    "jest-mock": "^29.0.1",
+    "jest-snapshot": "^29.0.1",
     "piscina": "^3.1.0",
     "supports-color": "^9.2.1"
   },
