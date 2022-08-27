@@ -86,11 +86,6 @@ export default async function run({
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
   stats.end = performance.now();
 
-  snapshotState._inlineSnapshots.forEach(({ frame }) => {
-    // When using native ESM, errors have a URL location.
-    // Jest expects paths.
-    frame.file = fileURLToPath(frame.file);
-  });
   snapshotState.save();
 
   // Restore the project-level serializers, so that serializers
