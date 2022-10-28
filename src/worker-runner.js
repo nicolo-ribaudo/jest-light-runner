@@ -86,13 +86,16 @@ export default async function run({
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
   stats.end = performance.now();
 
-  snapshotState.save();
+  const result = addSnapshotData(
+    toTestResult(stats, results, test),
+    snapshotState
+  );
 
   // Restore the project-level serializers, so that serializers
   // installed by one test file don't leak to other files.
   arrayReplace(snapshot.getSerializers(), projectSnapshotSerializers);
 
-  return toTestResult(stats, results, test);
+  return result;
 }
 
 async function loadTests(testFile) {
@@ -286,6 +289,36 @@ function toTestResult(stats, tests, { path, context }) {
       };
     }),
   };
+}
+
+// https://github.com/facebook/jest/blob/7d8d01c4854aa83e82cc11cefdd084a7d9b8bdfc/packages/jest-jasmine2/src/index.ts#L206
+function addSnapshotData(results, snapshotState) {
+  results.testResults.forEach(({ fullName, status }) => {
+    if (status === "pending" || status === "failed") {
+      // if test is skipped or failed, we don't want to mark
+      // its snapshots as obsolete.
+      snapshotState.markSnapshotsAsCheckedForTest(fullName);
+    }
+  });
+
+  const uncheckedCount = snapshotState.getUncheckedCount();
+  const uncheckedKeys = snapshotState.getUncheckedKeys();
+
+  if (uncheckedCount) {
+    snapshotState.removeUncheckedKeys();
+  }
+
+  const status = snapshotState.save();
+  results.snapshot.fileDeleted = status.deleted;
+  results.snapshot.added = snapshotState.added;
+  results.snapshot.matched = snapshotState.matched;
+  results.snapshot.unmatched = snapshotState.unmatched;
+  results.snapshot.updated = snapshotState.updated;
+  results.snapshot.unchecked = !status.deleted ? uncheckedCount : 0;
+  // Copy the array to prevent memory leaks
+  results.snapshot.uncheckedKeys = Array.from(uncheckedKeys);
+
+  return results;
 }
 
 function failureToString(test) {
