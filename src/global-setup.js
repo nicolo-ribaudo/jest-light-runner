@@ -2,9 +2,18 @@
 
 import mock from "jest-mock";
 import { jestExpect as expect } from "@jest/expect";
+import { ModernFakeTimers } from "@jest/fake-timers";
 import * as circus from "jest-circus";
 
 const jestMock = new mock.ModuleMocker(globalThis);
+const jestTimer = new ModernFakeTimers({
+  config: {
+    fakeTimers: {
+      enableGlobally: true,
+    },
+  },
+  global: globalThis,
+});
 
 globalThis.expect = expect;
 globalThis.test = circus.test;
@@ -20,4 +29,20 @@ globalThis.jest = {
   clearAllMocks: jestMock.clearAllMocks.bind(jestMock),
   resetAllMocks: jestMock.resetAllMocks.bind(jestMock),
   restoreAllMocks: jestMock.restoreAllMocks.bind(jestMock),
+  useFakeTimers: () => {
+    jestTimer.useFakeTimers();
+    return globalThis.jest;
+  },
+  setSystemTime: (time) => {
+    jestTimer.setSystemTime(time);
+    return globalThis.jest;
+  },
+  advanceTimersByTime: (ms) => {
+    jestTimer.advanceTimersByTime(ms);
+    return globalThis.jest;
+  },
+  useRealTimers: () => {
+    jestTimer.useRealTimers();
+    return globalThis.jest;
+  }
 };
