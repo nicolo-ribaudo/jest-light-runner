@@ -33,16 +33,16 @@ globalThis.jest = {
     jestTimer.useFakeTimers();
     return globalThis.jest;
   },
-  setSystemTime: (time) => {
+  setSystemTime: time => {
     jestTimer.setSystemTime(time);
     return globalThis.jest;
   },
-  advanceTimersByTime: (ms) => {
+  advanceTimersByTime: ms => {
     jestTimer.advanceTimersByTime(ms);
     return globalThis.jest;
   },
   useRealTimers: () => {
     jestTimer.useRealTimers();
     return globalThis.jest;
-  }
+  },
 };
