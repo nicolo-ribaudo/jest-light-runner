@@ -29,20 +29,20 @@ globalThis.jest = {
   clearAllMocks: jestMock.clearAllMocks.bind(jestMock),
   resetAllMocks: jestMock.resetAllMocks.bind(jestMock),
   restoreAllMocks: jestMock.restoreAllMocks.bind(jestMock),
-  useFakeTimers: () => {
+  useFakeTimers() {
     jestTimer.useFakeTimers();
-    return globalThis.jest;
+    return this;
   },
-  setSystemTime: time => {
+  setSystemTime(time) {
     jestTimer.setSystemTime(time);
-    return globalThis.jest;
+    return this;
   },
-  advanceTimersByTime: ms => {
+  advanceTimersByTime(ms) {
     jestTimer.advanceTimersByTime(ms);
-    return globalThis.jest;
+    return this;
   },
-  useRealTimers: () => {
+  useRealTimers() {
     jestTimer.useRealTimers();
-    return globalThis.jest;
+    return this;
   },
 };
