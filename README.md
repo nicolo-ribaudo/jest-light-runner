@@ -63,13 +63,13 @@ module.exports = {
 You can specify custom ESM loaders using Node.js's [`--loader`](https://nodejs.org/api/cli.html#--loadermodule) option. Jest's CLI doesn't allow providing Node.js-specific options, but you can do it by using the [`NODE_OPTIONS`](https://nodejs.org/docs/latest-v17.x/api/cli.html#node_optionsoptions) environment variable:
 
 ```bash
-NODE_OPTIONS='--loader ts-node/esm' jest
+NODE_OPTIONS="--loader ts-node/esm" jest
 ```
 
 Or, if you are using [`cross-env`](https://www.npmjs.com/package/cross-env) to be able to provide environment variables on multiple OSes:
 
 ```bash
-cross-env NODE_OPTIONS='--loader ts-node/esm' jest
+cross-env NODE_OPTIONS="--loader ts-node/esm" jest
 ```
 
 **Don't** run Node.js directly:
