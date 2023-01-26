@@ -12,6 +12,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 
 - Jest globals: `expect`, `test`, `it`, `describe`, `beforeAll`, `afterAll`, `beforeEach`, `afterEach`
 - Jest function mocks: `jest.fn`, `jest.spyOn`, `jest.clearAllMocks`, `jest.resetAllMocks`
+- Jest timer mocks: `jest.useFakeTimers`, `jest.useRealTimers`, `jest.setSystemTime`, `jest.advanceTimersByTime`
 - Inline and external snapshots
 - Jest cli options: `--testNamePattern`/`-t`, `--maxWorkers`, `--runInBand`
 - Jest config options: `setupFiles`, `setupFilesAfterEnv`, `snapshotSerializers`, `maxWorkers`, `snapshotFormat`, `snapshotResolver`
