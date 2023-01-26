@@ -173,9 +173,11 @@ async function runTest(fn, stats, results, ancestors, name) {
   });
 
   const errors = [];
+  const start = performance.now();
   await callAsync(fn).catch(error => {
     errors.push(error);
   });
+  const end = performance.now();
 
   // Get suppressed errors from ``jest-matchers`` that weren't thrown during
   // test execution and add them to the test result, potentially failing
@@ -191,7 +193,13 @@ async function runTest(fn, stats, results, ancestors, name) {
   } else {
     stats.passes++;
   }
-  results.push({ ancestors, title: name, errors, skipped: false });
+  results.push({
+    ancestors,
+    title: name,
+    duration: end - start,
+    errors,
+    skipped: false,
+  });
 }
 
 async function runHooks(hook, block, results, stats, ancestors, runInParents) {
@@ -276,7 +284,7 @@ function toTestResult(stats, tests, { path, context }) {
     testResults: tests.map(test => {
       return {
         ancestorTitles: test.ancestors,
-        duration: test.duration / 1000,
+        duration: test.duration,
         failureMessages: test.errors.length ? [failureToString(test)] : [],
         fullName: test.title,
         numPassingAsserts: test.errors.length > 0 ? 1 : 0,
