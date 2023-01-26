@@ -193,7 +193,13 @@ async function runTest(fn, stats, results, ancestors, name) {
   } else {
     stats.passes++;
   }
-  results.push({ ancestors, title: name, duration: end - start, errors, skipped: false });
+  results.push({
+    ancestors,
+    title: name,
+    duration: end - start,
+    errors,
+    skipped: false,
+  });
 }
 
 async function runHooks(hook, block, results, stats, ancestors, runInParents) {
