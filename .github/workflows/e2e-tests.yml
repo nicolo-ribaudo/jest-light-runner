@@ -21,7 +21,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: prettier/prettier
-          ref: next
           path: prettier
 
       - name: Setup Node.js
