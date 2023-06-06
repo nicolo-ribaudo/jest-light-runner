@@ -15,6 +15,30 @@ const jestTimer = new ModernFakeTimers({
   global: globalThis,
 });
 
+const jest = {
+  fn: jestMock.fn.bind(jestMock),
+  spyOn: jestMock.spyOn.bind(jestMock),
+  clearAllMocks: jestMock.clearAllMocks.bind(jestMock),
+  resetAllMocks: jestMock.resetAllMocks.bind(jestMock),
+  restoreAllMocks: jestMock.restoreAllMocks.bind(jestMock),
+  useFakeTimers() {
+    jestTimer.useFakeTimers();
+    return jest;
+  },
+  setSystemTime(time) {
+    jestTimer.setSystemTime(time);
+    return jest;
+  },
+  advanceTimersByTime(ms) {
+    jestTimer.advanceTimersByTime(ms);
+    return jest;
+  },
+  useRealTimers() {
+    jestTimer.useRealTimers();
+    return jest;
+  },
+};
+
 globalThis.expect = expect;
 globalThis.test = circus.test;
 globalThis.it = circus.it;
@@ -27,26 +51,4 @@ globalThis.beforeAll = circus.beforeAll;
 globalThis.afterAll = circus.afterAll;
 globalThis.beforeEach = circus.beforeEach;
 globalThis.afterEach = circus.afterEach;
-globalThis.jest = {
-  fn: jestMock.fn.bind(jestMock),
-  spyOn: jestMock.spyOn.bind(jestMock),
-  clearAllMocks: jestMock.clearAllMocks.bind(jestMock),
-  resetAllMocks: jestMock.resetAllMocks.bind(jestMock),
-  restoreAllMocks: jestMock.restoreAllMocks.bind(jestMock),
-  useFakeTimers() {
-    jestTimer.useFakeTimers();
-    return this;
-  },
-  setSystemTime(time) {
-    jestTimer.setSystemTime(time);
-    return this;
-  },
-  advanceTimersByTime(ms) {
-    jestTimer.advanceTimersByTime(ms);
-    return this;
-  },
-  useRealTimers() {
-    jestTimer.useRealTimers();
-    return this;
-  },
-};
+globalThis.jest = jest;
