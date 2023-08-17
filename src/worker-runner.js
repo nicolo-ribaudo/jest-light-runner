@@ -4,7 +4,6 @@ import { performance } from "perf_hooks";
 import * as snapshot from "jest-snapshot";
 import { jestExpect as expect } from "@jest/expect";
 import * as circus from "jest-circus";
-import { inspect } from "util";
 import { isWorkerThread } from "piscina";
 
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
@@ -333,7 +332,13 @@ function failureToString(test) {
   return (
     test.ancestors.concat(test.title).join(" > ") +
     "\n" +
-    test.errors.map(error => inspect(error).replace(/^/gm, "    ")).join("\n") +
+    test.errors
+      .map(error =>
+        error.stack
+          .replace(/\n.*jest-light-runner.*/g, "")
+          .replace(/^/gm, "    ")
+      )
+      .join("\n") +
     "\n"
   );
 }
