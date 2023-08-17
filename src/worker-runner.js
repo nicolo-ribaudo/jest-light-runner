@@ -333,7 +333,7 @@ function failureToString(test) {
   return (
     test.ancestors.concat(test.title).join(" > ") +
     "\n" +
-    test.errors.map(error => error.toString().replace(/^/gm, "    ")).join("\n") +
+    test.errors.map(error => error.stack.split('\n').slice(0, -3).join('\n').replace(/^/gm, "    ")).join("\n") +
     "\n"
   );
 }
