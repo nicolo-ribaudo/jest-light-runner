@@ -81,6 +81,14 @@ node --loader ts-node/esm ./node_modules/.bin/jest
 
 This will result in `ERR_UNKNOWN_FILE_EXTENSION`, due to the loader argument not being passed to the sub-processes. This is a [known limitation](https://github.com/TypeStrong/ts-node/issues/1062#issuecomment-1143518446), and ts-node documentation [recommends using NODE_OPTIONS](https://typestrong.org/ts-node/docs/usage/#node-flags-and-other-tools).
 
+### Source maps support
+
+If you are running transpiled code and you want to load their source maps to map errors to the original code, you can install the `source-map-support` package and add the following to your Jest configuration:
+
+```js
+setupFiles: ["source-map-support/register"];
+```
+
 ## Stability
 
 This project follows semver, and it's currently in the `0.x` release line.
