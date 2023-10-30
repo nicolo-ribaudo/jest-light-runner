@@ -34,5 +34,6 @@
   "license": "MIT",
   "files": [
     "src"
-  ]
+  ],
+  "packageManager": "yarn@4.0.1"
 }
