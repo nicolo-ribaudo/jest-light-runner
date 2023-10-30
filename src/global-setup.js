@@ -1,11 +1,11 @@
 /* eslint-disable import/extensions */
 
-import mock from "jest-mock";
+import { ModuleMocker } from "jest-mock";
 import { jestExpect as expect } from "@jest/expect";
 import { ModernFakeTimers } from "@jest/fake-timers";
 import * as circus from "jest-circus";
 
-const jestMock = new mock.ModuleMocker(globalThis);
+const jestMock = new ModuleMocker(globalThis);
 const jestTimer = new ModernFakeTimers({
   config: {
     fakeTimers: {
