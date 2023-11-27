@@ -4,7 +4,7 @@ import { performance } from "perf_hooks";
 import * as snapshot from "jest-snapshot";
 import { jestExpect as expect } from "@jest/expect";
 import * as circus from "jest-circus";
-import { isWorkerThread } from "piscina";
+import Tinypool from "tinypool";
 
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
@@ -14,7 +14,7 @@ const initialSetup = once(async projectConfig => {
   // process.chdir, that we use multiple times in our tests.
   // We can "polyfill" it for process.cwd() usage, but it
   // won't affect path.* and fs.* functions.
-  if (isWorkerThread) {
+  if (Tinypool.isWorkerThread) {
     const startCwd = process.cwd();
     let cwd = startCwd;
     process.cwd = () => cwd;
