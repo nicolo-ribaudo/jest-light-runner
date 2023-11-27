@@ -335,7 +335,7 @@ function failureToString(test) {
     test.errors
       .map(error =>
         error.stack
-          .replace(/\n.*(?:jest-light-runner|tinypool).*/g, "")
+          .replace(/\n.*jest-light-runner.*/g, "")
           .replace(/^/gm, "    ")
       )
       .join("\n") +
