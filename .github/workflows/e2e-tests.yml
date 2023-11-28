@@ -43,6 +43,8 @@ jobs:
         working-directory: prettier
 
       - name: Run tests
+        env:
+          NODE_ENV: production
         run: |
           yarn jest tests/format ${{ matrix.additional-options }}
         working-directory: prettier
