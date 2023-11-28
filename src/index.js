@@ -1,4 +1,4 @@
-import { Piscina } from "piscina";
+import Tinypool from "tinypool";
 import supportsColor from "supports-color";
 import { MessageChannel } from "worker_threads";
 
@@ -7,7 +7,7 @@ import { MessageChannel } from "worker_threads";
 export default class LightRunner {
   // TODO: Use real private fields when we drop support for Node.js v12
   _config;
-  _piscina;
+  _pool;
 
   constructor(config) {
     this._config = config;
@@ -24,7 +24,7 @@ export default class LightRunner {
     const { maxWorkers } = config;
     const runInBand = maxWorkers === 1;
 
-    this._piscina = new (runInBand ? InBandPiscina : Piscina)({
+    this._pool = new (runInBand ? InBandTinypool : Tinypool)({
       filename: new URL("./worker-runner.js", import.meta.url).href,
       maxThreads: maxWorkers,
       env: {
@@ -52,7 +52,7 @@ export default class LightRunner {
         mc.port2.onmessage = () => onStart(test);
         mc.port2.unref();
 
-        return this._piscina
+        return this._pool
           .run(
             { test, updateSnapshot, testNamePattern, port: mc.port1 },
             { transferList: [mc.port1] }
@@ -66,9 +66,9 @@ export default class LightRunner {
   }
 }
 
-// Exposes an API similar to Piscina, but it uses dynamic import()
+// Exposes an API similar to Tinypool, but it uses dynamic import()
 // rather than worker_threads.
-class InBandPiscina {
+class InBandTinypool {
   _moduleP;
   _moduleDefault;
 

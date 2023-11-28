@@ -9,7 +9,7 @@ jobs:
     name: Prettier
     strategy:
       matrix:
-        additional-options: ["--runInBand"]
+        additional-options: ["--maxWorkers=2", "--runInBand"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,8 +43,11 @@ jobs:
         working-directory: prettier
 
       - name: Run tests
+        env:
+          NODE_ENV: production
+          # FULL_TEST: true
         run: |
-          yarn test:dist tests/format ${{ matrix.additional-options }}
+          yarn jest tests/format ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:
