@@ -58,8 +58,18 @@ export default class LightRunner {
             { transferList: [mc.port1] }
           )
           .then(
-            result => void onResult(test, result),
-            error => void onFailure(test, error)
+            result => {
+              // When `--runInBand` is enabled, `InBandTinypool` executes tasks
+              // in a microtask which may complete prior to having received the
+              // start message on the `MessageChannel`. As such, disconnect the
+              // start callback to avoid late invocations.
+              mc.port2.onmessage = null;
+              onResult(test, result);
+            },
+            error => {
+              mc.port2.onmessage = null;
+              onFailure(test, error);
+            }
           );
       })
     );
