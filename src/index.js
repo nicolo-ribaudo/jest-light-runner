@@ -31,6 +31,9 @@ export default class LightRunner {
         // Workers don't have a tty; we whant them to inherit
         // the color support level from the main thread.
         FORCE_COLOR: supportsColor.stdout.level,
+        // Some applications use this to detect whether they
+        // are running in Jest.
+        JEST_WORKER_ID: "1",
         ...process.env,
       },
     });
