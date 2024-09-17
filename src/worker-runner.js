@@ -82,7 +82,10 @@ export default async function run({
   expect.setState({ snapshotState, testPath: test.path });
 
   stats.start = performance.now();
+  const { afterAll, beforeAll } = await import(test.context.config.setupFilesAfterEnv[0])
+  await beforeAll()
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
+  await afterAll()
   stats.end = performance.now();
 
   const result = addSnapshotData(
@@ -335,8 +338,8 @@ function failureToString(test) {
     test.errors
       .map(error =>
         error.stack
-          .replace(/\n.*jest-light-runner.*/g, "")
-          .replace(/^/gm, "    ")
+        .replace(/\n.*jest-light-runner.*/g, "")
+        .replace(/^/gm, "    ")
       )
       .join("\n") +
     "\n"
