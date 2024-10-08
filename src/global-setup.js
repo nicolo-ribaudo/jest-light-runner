@@ -21,8 +21,8 @@ const jest = {
   clearAllMocks: jestMock.clearAllMocks.bind(jestMock),
   resetAllMocks: jestMock.resetAllMocks.bind(jestMock),
   restoreAllMocks: jestMock.restoreAllMocks.bind(jestMock),
-  useFakeTimers() {
-    jestTimer.useFakeTimers();
+  useFakeTimers(...args) {
+    jestTimer.useFakeTimers(...args);
     return jest;
   },
   setSystemTime(time) {
