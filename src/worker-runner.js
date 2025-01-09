@@ -1,3 +1,4 @@
+import { SourceMapConsumer } from 'source-map'
 import path from "path";
 import { pathToFileURL } from "url";
 import { performance } from "perf_hooks";
@@ -5,6 +6,8 @@ import * as snapshot from "jest-snapshot";
 import { jestExpect as expect } from "@jest/expect";
 import * as circus from "jest-circus";
 import Tinypool from "tinypool";
+import fs from 'fs/promises'
+
 
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
@@ -82,14 +85,14 @@ export default async function run({
   expect.setState({ snapshotState, testPath: test.path });
 
   stats.start = performance.now();
-  const { afterAll, beforeAll, afterEach, beforeEach } = await import(test.context.config.setupFilesAfterEnv[0])
-  await beforeAll?.()
-  await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats, [], afterEach, beforeEach);
-  await afterAll?.()
+  const { afterAll, beforeAll, afterEach } = await import(test.context.config.setupFilesAfterEnv[0])
+  await beforeAll()
+  await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats, [], afterEach);
+  await afterAll()
   stats.end = performance.now();
 
   const result = addSnapshotData(
-    toTestResult(stats, results, test),
+    await toTestResult(stats, results, test),
     snapshotState
   );
 
@@ -114,8 +117,7 @@ async function runTestBlock(
   results,
   stats,
   ancestors = [],
-  afterEach,
-  beforeEach
+  afterEach
 ) {
   await runHooks("beforeAll", block, results, stats, ancestors);
 
@@ -139,15 +141,13 @@ async function runTestBlock(
         results,
         stats,
         nextAncestors ?? [],
-        afterEach,
-        beforeEach
+        afterEach
       );
     } else if (type === "test") {
-      await beforeEach?.()
       await runHooks("beforeEach", block, results, stats, nextAncestors ?? [], true);
       await runTest(fn, stats, results, ancestors ?? [], name);
       await runHooks("afterEach", block, results, stats, nextAncestors ?? [], true);
-      await afterEach?.()
+      await afterEach()
     }
   }
 
@@ -257,16 +257,16 @@ function callAsync(fn) {
  * @param {import("@jest/test-result").Test} testInput
  * @returns {import("@jest/test-result").TestResult}
  */
-function toTestResult(stats, tests, { path, context }) {
+async function toTestResult(stats, tests, { path, context }) {
   const { start, end } = stats;
   const runtime = end - start;
+
+  const x = await Promise.all(tests.filter(t => t.errors.length > 0).map(async test => await failureToStringSource(test, path.replace('.js', '.js.map'))))
 
   return {
     coverage: globalThis.__coverage__,
     console: null,
-    failureMessage: tests
-      .filter(t => t.errors.length > 0)
-      .map(failureToString)
+    failureMessage: x
       .join("\n"),
     numFailingTests: stats.failures,
     numPassingTests: stats.passes,
@@ -288,12 +288,12 @@ function toTestResult(stats, tests, { path, context }) {
     },
     sourceMaps: {},
     testExecError: null,
-    testFilePath: path,
+    testFilePath: path.replace('pbp-api/dist/', 'pbp-api/src/').replace('.js', '.ts'),
     testResults: tests.map(test => {
       return {
         ancestorTitles: test.ancestors,
         duration: test.duration,
-        failureMessages: test.errors.length ? [failureToString(test)] : [],
+        failureMessages: test.errors.length ? [failureToString(test, path.replace('.js', '.js.map'))] : [],
         fullName: test.title,
         numPassingAsserts: test.errors.length > 0 ? 1 : 0,
         status: test.skipped
@@ -337,8 +337,8 @@ function addSnapshotData(results, snapshotState) {
   return results;
 }
 
-function failureToString(test) {
-  return (
+function failureToString(test, mapPath) {
+  const errorString =  (
     test.ancestors.concat(test.title).join(" > ") +
     "\n" +
     test.errors
@@ -349,7 +349,60 @@ function failureToString(test) {
       )
       .join("\n") +
     "\n"
-  );
+  ).replace('pbp-api/dist/', 'pbp-api/src/').replace('.js', '.ts');
+  return errorString
+}
+
+async function failureToStringSource(test, mapPath) {
+  const errorString =  (
+    test.ancestors.concat(test.title).join(" > ") +
+    "\n" +
+    test.errors
+      .map(error =>
+        error.stack
+        .replace(/\n.*jest-light-runner.*/g, "")
+        .replace(/^/gm, "    ")
+      )
+      .join("\n") +
+    "\n"
+  ).replace('pbp-api/dist/', 'pbp-api/src/').replace('.js', '.ts');
+
+  if (typeof mapPath !== 'string') {
+    return errorString
+  }
+  const map = await fs.readFile(mapPath, { encoding: 'utf-8' })
+
+  let modifiedErrorString = ''
+  const original = await SourceMapConsumer.with(
+    map,
+    null,
+    consumer => {
+      let modified = errorString.replace(
+        /at (.*?):(\d+):(\d+)/g,
+        (match, file, line, column) => {
+    
+            const original = consumer.originalPositionFor({
+                line: Number(line),
+                column: Number(column),
+            });
+    
+            if (
+                original &&
+                original.source &&
+                original.line !== null &&
+                original.column !== null
+            ) {
+                return `at ${original.source.replace(/(\.\.\/)*src\//g, 'src/')}:${original.line}:${original.column}`;
+            }
+    
+            // If no mapping is found, return the original match
+            return match;
+        }
+    );
+    modifiedErrorString = modified
+    }
+  )
+  return modifiedErrorString
 }
 
 function once(fn) {
