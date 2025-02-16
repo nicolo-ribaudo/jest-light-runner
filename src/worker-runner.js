@@ -56,7 +56,7 @@ export default async function run({
 }) {
   const projectSnapshotSerializers = await initialSetup(test.context.config);
 
-  port.postMessage("start");
+  port?.postMessage("start");
 
   const testNamePatternRE =
     testNamePattern != null ? new RegExp(testNamePattern, "i") : null;
@@ -69,7 +69,7 @@ export default async function run({
   const { tests, hasFocusedTests } = await loadTests(test.path);
 
   const snapshotResolver = await snapshot.buildSnapshotResolver(
-    test.context.config
+    test.context.config,
   );
   const snapshotState = new snapshot.SnapshotState(
     snapshotResolver.resolveSnapshotPath(test.path),
@@ -77,7 +77,7 @@ export default async function run({
       prettierPath: "prettier",
       updateSnapshot,
       snapshotFormat: test.context.config.snapshotFormat,
-    }
+    },
   );
   expect.setState({ snapshotState, testPath: test.path });
 
@@ -87,7 +87,7 @@ export default async function run({
 
   const result = addSnapshotData(
     toTestResult(stats, results, test),
-    snapshotState
+    snapshotState,
   );
 
   // Restore the project-level serializers, so that serializers
@@ -110,7 +110,7 @@ async function runTestBlock(
   testNamePatternRE,
   results,
   stats,
-  ancestors = []
+  ancestors = [],
 ) {
   await runHooks("beforeAll", block, results, stats, ancestors);
 
@@ -133,7 +133,7 @@ async function runTestBlock(
         testNamePatternRE,
         results,
         stats,
-        nextAncestors
+        nextAncestors,
       );
     } else if (type === "test") {
       await runHooks("beforeEach", block, results, stats, nextAncestors, true);
@@ -290,8 +290,8 @@ function toTestResult(stats, tests, { path, context }) {
         status: test.skipped
           ? "pending"
           : test.errors.length > 0
-          ? "failed"
-          : "passed",
+            ? "failed"
+            : "passed",
         title: test.title,
       };
     }),
@@ -336,7 +336,7 @@ function failureToString(test) {
       .map(error =>
         error.stack
           .replace(/\n.*jest-light-runner.*/g, "")
-          .replace(/^/gm, "    ")
+          .replace(/^/gm, "    "),
       )
       .join("\n") +
     "\n"
