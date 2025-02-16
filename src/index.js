@@ -48,7 +48,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
      * @param {*} onFailure
      */
     runTests(tests, watcher, onStart, onResult, onFailure) {
-      const { updateSnapshot, testNamePattern } = this._config;
+      const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
       const isProcessRunner = this._isProcessRunner;
 
       return pMap(
@@ -74,7 +74,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
             error => void onFailure(test, error),
           );
         },
-        { concurrency: this._pool.threads.length },
+        { concurrency: maxWorkers },
       );
     }
   };
