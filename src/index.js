@@ -1,6 +1,7 @@
 import Tinypool from "tinypool";
 import supportsColor from "supports-color";
 import { MessageChannel } from "worker_threads";
+import pMap from "p-map";
 
 /** @typedef {import("@jest/test-result").Test} Test */
 
@@ -50,8 +51,9 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       const { updateSnapshot, testNamePattern } = this._config;
       const isProcessRunner = this._isProcessRunner;
 
-      return Promise.all(
-        tests.map(test => {
+      return pMap(
+        tests,
+        test => {
           let promise;
 
           if (isProcessRunner) {
@@ -71,7 +73,8 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
             result => void onResult(test, result),
             error => void onFailure(test, error),
           );
-        }),
+        },
+        { concurrency: this._pool.threads.length },
       );
     }
   };
