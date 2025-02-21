@@ -32,18 +32,10 @@ jobs:
           yarn build
         working-directory: prettier
 
-      # Prettier need downgrade yarn and jest to run on Node.js 14
-      # https://github.com/prettier/prettier/blob/4460a4e55da3a1c9b6ad6b38c9f797e70d8fe551/.github/workflows/prod-test.yml#L94-L109
-      - run: yarn set version 3
-        working-directory: prettier
-
       - name: Setup Node.js v14
         uses: actions/setup-node@v3
         with:
-          node-version: "14"
-
-      - run: node ./scripts/prepare-nodejs-14-test.js
-        working-directory: prettier
+          node-version: "16"
 
       - name: Update jest-light-runner
         run: |
