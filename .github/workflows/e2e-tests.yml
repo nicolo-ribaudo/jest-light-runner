@@ -10,6 +10,8 @@ jobs:
     strategy:
       matrix:
         additional-options: ["--maxWorkers=2", "--runInBand"]
+    env:
+      YARN_IGNORE_NODE: 1
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,8 +40,6 @@ jobs:
           node-version: "16"
 
       - name: Update jest-light-runner
-        env:
-          YARN_IGNORE_NODE: 1
         run: |
           yarn up jest-light-runner@file:../jest-light-runner
         working-directory: prettier
