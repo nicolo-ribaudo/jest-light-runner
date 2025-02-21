@@ -11,7 +11,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
     _config;
     _pool;
     _isProcessRunner = runtime === "child_process";
-    _runInBand = false
+    _runInBand = false;
 
     constructor(config) {
       this._config = config;
