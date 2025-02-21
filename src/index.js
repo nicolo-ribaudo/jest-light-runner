@@ -11,6 +11,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
     _config;
     _pool;
     _isProcessRunner = runtime === "child_process";
+    _runInBand = false
 
     constructor(config) {
       this._config = config;
@@ -27,6 +28,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       const { maxWorkers } = config;
       const runInBand = maxWorkers === 1;
 
+      this._runInBand = runInBand;
       this._pool = new (runInBand ? InBandTinypool : Tinypool)({
         filename: new URL("./worker-runner.js", import.meta.url).href,
         runtime,
@@ -49,9 +51,8 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
      */
     runTests(tests, watcher, onStart, onResult, onFailure) {
       const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
-      const isProcessRunner = this._isProcessRunner;
 
-      if (isProcessRunner) {
+      if (!this._runInBand && this._isProcessRunner) {
         return pMap(
           tests,
           test =>
