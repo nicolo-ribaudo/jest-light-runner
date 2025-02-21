@@ -51,30 +51,34 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
       const isProcessRunner = this._isProcessRunner;
 
-      return pMap(
-        tests,
-        test => {
-          let promise;
+      if (isProcessRunner) {
+        return pMap(
+          tests,
+          test =>
+            this._pool.run({ test, updateSnapshot, testNamePattern }).then(
+              result => void onResult(test, result),
+              error => void onFailure(test, error),
+            ),
+          { concurrency: maxWorkers },
+        );
+      }
 
-          if (isProcessRunner) {
-            onStart(test);
-            promise = this._pool.run({ test, updateSnapshot, testNamePattern });
-          } else {
-            const mc = new MessageChannel();
-            mc.port2.onmessage = () => onStart(test);
-            mc.port2.unref();
-            promise = this._pool.run(
+      return Promise.all(
+        tests.map(test => {
+          const mc = new MessageChannel();
+          mc.port2.onmessage = () => onStart(test);
+          mc.port2.unref();
+
+          return this._pool
+            .run(
               { test, updateSnapshot, testNamePattern, port: mc.port1 },
               { transferList: [mc.port1] },
+            )
+            .then(
+              result => void onResult(test, result),
+              error => void onFailure(test, error),
             );
-          }
-
-          return promise.then(
-            result => void onResult(test, result),
-            error => void onFailure(test, error),
-          );
-        },
-        { concurrency: maxWorkers },
+        }),
       );
     }
   };
