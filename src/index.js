@@ -55,11 +55,16 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       if (!this._runInBand && this._isProcessRunner) {
         return pMap(
           tests,
-          test =>
-            this._pool.run({ test, updateSnapshot, testNamePattern }).then(
-              result => void onResult(test, result),
-              error => void onFailure(test, error),
-            ),
+          test => {
+            onStart(test);
+
+            return this._pool
+              .run({ test, updateSnapshot, testNamePattern })
+              .then(
+                result => void onResult(test, result),
+                error => void onFailure(test, error),
+              );
+          },
           { concurrency: maxWorkers },
         );
       }
