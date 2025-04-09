@@ -1868,9 +1868,10 @@ __metadata:
     jest-each: "npm:^30.0.0-alpha.1"
     jest-mock: "npm:^30.0.0-alpha.1"
     jest-snapshot: "npm:^30.0.0-alpha.1"
-    prettier: "npm:^2.6.2"
+    p-map: "npm:^7.0.3"
+    prettier: "npm:^3.5.1"
     supports-color: "npm:^9.2.1"
-    tinypool: "npm:^0.8.1"
+    tinypool: "npm:0.8.4"
   peerDependencies:
     jest: ^27.5.0 || ^28.0.0 || ^29.0.0|| ^30.0.0-0
   languageName: unknown
@@ -2464,6 +2465,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-map@npm:^7.0.3":
+  version: 7.0.3
+  resolution: "p-map@npm:7.0.3"
+  checksum: 2ef48ccfc6dd387253d71bf502604f7893ed62090b2c9d73387f10006c342606b05233da0e4f29388227b61eb5aeface6197e166520c465c234552eeab2fe633
+  languageName: node
+  linkType: hard
+
 "p-try@npm:^2.0.0":
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
@@ -2527,12 +2535,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^2.6.2":
-  version: 2.6.2
-  resolution: "prettier@npm:2.6.2"
+"prettier@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "prettier@npm:3.5.1"
   bin:
-    prettier: bin-prettier.js
-  checksum: c1531cacd14ebe93c2289a7caa174f7caa14a7d1686f2ce81685209c37c1cb0c2ce5d86d90574c28380ebe22d88b90026d0b493140e44a2ae3c5a2aa93ab4065
+    prettier: bin/prettier.cjs
+  checksum: 09ab168e651e50c2c79804d65f17a68129ce1c573830b2fb08c988b585add8076b8d995789034d66a14338d6b8835e8c591e0fc1bc90f4344af9645738636d01
   languageName: node
   linkType: hard
 
@@ -2943,10 +2951,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinypool@npm:^0.8.1":
-  version: 0.8.1
-  resolution: "tinypool@npm:0.8.1"
-  checksum: 3fae8acc22b7d0364eb202b64f61f0d8b10dcead6bef9b8fab1836857dcecd0e34fadc47ab309754ead2cb29bfa4b3467a9fc0daae23669b19ff403ae1364b5c
+"tinypool@npm:0.8.4":
+  version: 0.8.4
+  resolution: "tinypool@npm:0.8.4"
+  checksum: 7365944c2532f240111443e7012be31a634faf1a02db08a91db3aa07361c26a374d0be00a0f2ea052c4bee39c107ba67f1f814c108d9d51dfc725c559c1a9c03
   languageName: node
   linkType: hard
 

@@ -19,11 +19,12 @@
     "jest-each": "^30.0.0-alpha.1",
     "jest-mock": "^30.0.0-alpha.1",
     "jest-snapshot": "^30.0.0-alpha.1",
+    "p-map": "^7.0.3",
     "supports-color": "^9.2.1",
-    "tinypool": "^0.8.1"
+    "tinypool": "0.8.4"
   },
   "devDependencies": {
-    "prettier": "^2.6.2"
+    "prettier": "^3.5.1"
   },
   "peerDependencies": {
     "jest": "^27.5.0 || ^28.0.0 || ^29.0.0|| ^30.0.0-0"

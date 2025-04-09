@@ -10,6 +10,8 @@ jobs:
     strategy:
       matrix:
         additional-options: ["--maxWorkers=2", "--runInBand"]
+    env:
+      YARN_IGNORE_NODE: 1
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,6 +32,17 @@ jobs:
         run: |
           yarn install --immutable
           yarn build
+        working-directory: prettier
+
+      # `jest@30.0.0-alpha.2` is the last version that supports Node.js v14
+      - name: Install jest@30.0.0-alpha.2
+        run: node ./scripts/prepare-nodejs-14-test.js
+        working-directory: prettier
+
+      - name: Downgrade yarn to v3
+        run: |
+          yarn set version 3
+          cat .yarnrc.yml
         working-directory: prettier
 
       - name: Setup Node.js v14
