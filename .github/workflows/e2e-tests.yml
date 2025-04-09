@@ -34,6 +34,11 @@ jobs:
           yarn build
         working-directory: prettier
 
+      # `jest@30.0.0-alpha.2` is the last version that supports Node.js v14
+      - name: Install jest@30.0.0-alpha.2
+        run: node ./scripts/prepare-nodejs-14-test.js
+        working-directory: prettier
+
       - name: Downgrade yarn to v3
         run: |
           yarn set version 3
