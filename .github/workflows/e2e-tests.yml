@@ -36,7 +36,7 @@ jobs:
 
       - name: Downgrade yarn to v3
         run: |
-          yarn set version 3
+          yarn set version 3.x
           cat .yarnrc.yml
 
       - name: Setup Node.js v14
