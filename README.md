@@ -37,11 +37,9 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
     export default createRunner({ runtime: "child_process" });
     ```
 
-    ```js
-    // jest.config.js
-    module.exports = {
-      runner: "./path/to/jest-light-process-runner.js",
-    };
+    ```diff
+    -  runner: "jest-light-runner",
+    +  runner: "./path/to/jest-light-process-runner.js",
     ```
 
   - Use `--runInBand`, tests will run in main thread instead of workers.
