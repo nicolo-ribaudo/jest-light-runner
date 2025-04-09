@@ -37,7 +37,7 @@ jobs:
       - name: Setup Node.js v14
         uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: "14"
 
       - name: Update jest-light-runner
         run: |
