@@ -21,7 +21,7 @@
     "jest-snapshot": "^30.0.0-alpha.1",
     "p-map": "^7.0.3",
     "supports-color": "^9.2.1",
-    "tinypool": "^1.0.2"
+    "tinypool": "^0.9.0"
   },
   "devDependencies": {
     "prettier": "^3.5.1"
