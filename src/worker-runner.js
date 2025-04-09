@@ -34,9 +34,7 @@ const initialSetup = once(async projectConfig => {
   for (const snapshotSerializer of projectConfig.snapshotSerializers
     .slice()
     .reverse()) {
-    const module = await import(
-      pathToFileURL(snapshotSerializer)
-    );
+    const module = await import(pathToFileURL(snapshotSerializer));
     snapshot.addSerializer(module.default ?? module);
   }
 
