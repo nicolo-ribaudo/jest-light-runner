@@ -34,6 +34,11 @@ jobs:
           yarn build
         working-directory: prettier
 
+      - name: Downgrade yarn to v3
+        run: |
+          yarn set version 3
+          cat .yarnrc.yml
+
       - name: Setup Node.js v14
         uses: actions/setup-node@v3
         with:
