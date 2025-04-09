@@ -1871,7 +1871,7 @@ __metadata:
     p-map: "npm:^7.0.3"
     prettier: "npm:^3.5.1"
     supports-color: "npm:^9.2.1"
-    tinypool: "npm:^1.0.2"
+    tinypool: "npm:^0.9.0"
   peerDependencies:
     jest: ^27.5.0 || ^28.0.0 || ^29.0.0|| ^30.0.0-0
   languageName: unknown
@@ -2951,10 +2951,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinypool@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "tinypool@npm:1.0.2"
-  checksum: 6109322f14b3763f65c8fa49fddab72cd3edd96b82dd50e05e63de74867329ff5353bff4377281ec963213d9314f37f4a353e9ee34bbac85fd4c1e4a568d6076
+"tinypool@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "tinypool@npm:0.9.0"
+  checksum: 06e8e59ab4335356e1ead9658867add8aa19f5d76d5b4b65673b6474bc38e159690620e39416abd26a132469c38c38b0abbc628fda9472d9a86bf0567f5b3797
   languageName: node
   linkType: hard
 
