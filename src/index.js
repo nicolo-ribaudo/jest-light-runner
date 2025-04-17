@@ -27,18 +27,22 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       // because it isolates every test in a vm.Context.
       const { maxWorkers } = config;
       const runInBand = maxWorkers === 1;
+      const env =
+        runInBand || this._isProcessRunner
+          ? process.env
+          : {
+              // Workers don't have a tty; we whant them to inherit
+              // the color support level from the main thread.
+              FORCE_COLOR: supportsColor.stdout.level,
+              ...process.env,
+            };
 
       this._runInBand = runInBand;
       this._pool = new (runInBand ? InBandTinypool : Tinypool)({
         filename: new URL("./worker-runner.js", import.meta.url).href,
         runtime,
         maxThreads: maxWorkers,
-        env: {
-          // Workers don't have a tty; we whant them to inherit
-          // the color support level from the main thread.
-          FORCE_COLOR: supportsColor.stdout.level,
-          ...process.env,
-        },
+        env,
       });
     }
 
