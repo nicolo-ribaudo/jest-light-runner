@@ -43,6 +43,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
         runtime,
         maxThreads: maxWorkers,
         env,
+        isolateWorkers: true,
       });
     }
 
