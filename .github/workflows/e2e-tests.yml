@@ -15,18 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: jest-light-runner
 
       - name: Checkout "prettier"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: prettier/prettier
           path: prettier
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
 
       - name: Build
         run: |
@@ -46,7 +46,7 @@ jobs:
         working-directory: prettier
 
       - name: Setup Node.js v14
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "14"
 
@@ -63,6 +63,46 @@ jobs:
           yarn jest tests/format ${{ matrix.additional-options }}
         working-directory: prettier
 
+  prettier-next:
+    name: Prettier-next
+    strategy:
+      matrix:
+        additional-options: ["--maxWorkers=2", "--runInBand"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: jest-light-runner
+
+      - name: Checkout "prettier-next"
+        uses: actions/checkout@v4
+        with:
+          repository: prettier/prettier
+          ref: next
+          path: prettier
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+
+      - name: Build
+        run: |
+          yarn install --immutable
+          yarn build
+        working-directory: prettier
+
+      - name: Update jest-light-runner
+        run: |
+          yarn up jest-light-runner@file:../jest-light-runner
+        working-directory: prettier
+
+      - name: Run tests
+        env:
+          FULL_TEST: true
+        run: |
+          yarn c8 jest ${{ matrix.additional-options }}
+        working-directory: prettier
+
   babel:
     name: Babel
     runs-on: ubuntu-latest
@@ -71,15 +111,15 @@ jobs:
         additional-options: ["--maxWorkers=2", "--runInBand"]
     steps:
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: jest-light-runner
 
       - name: Checkout "babel"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: babel/babel
           path: babel
