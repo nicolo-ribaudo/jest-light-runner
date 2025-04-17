@@ -41,6 +41,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       this._pool = new (runInBand ? InBandTinypool : Tinypool)({
         filename: new URL("./worker-runner.js", import.meta.url).href,
         runtime,
+        minThreads: maxWorkers,
         maxThreads: maxWorkers,
         env,
       });
