@@ -57,8 +57,7 @@ jobs:
 
       - name: Run tests
         env:
-          NODE_ENV: production
-          # FULL_TEST: true
+          FULL_TEST: true
         run: |
           yarn jest tests/format ${{ matrix.additional-options }}
         working-directory: prettier
@@ -68,7 +67,7 @@ jobs:
     strategy:
       matrix:
         additional-options: ["--maxWorkers=2", "--runInBand"]
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,8 +83,6 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        with:
-          node-version: "22"
 
       - name: Build
         run: |
