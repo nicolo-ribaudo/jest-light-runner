@@ -79,6 +79,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
               if (!signal) {
                 process.disconnect();
                 process.kill = originalKill;
+                return;
               }
               return originalKill.call(process, signal);
             };
