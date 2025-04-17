@@ -65,6 +65,9 @@ jobs:
 
   prettier-next:
     name: Prettier-next
+    strategy:
+      matrix:
+        additional-options: ["--maxWorkers=2", "--runInBand"]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -81,6 +84,8 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
       - name: Build
         run: |
@@ -98,7 +103,7 @@ jobs:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          yarn c8 yarn jest
+          yarn c8 yarn jest ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:
