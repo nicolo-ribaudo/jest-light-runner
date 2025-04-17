@@ -68,7 +68,7 @@ jobs:
     strategy:
       matrix:
         additional-options: ["--maxWorkers=2", "--runInBand"]
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
