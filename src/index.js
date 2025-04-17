@@ -53,24 +53,44 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
      * @param {*} onResult
      * @param {*} onFailure
      */
-    runTests(tests, watcher, onStart, onResult, onFailure) {
+    async runTests(tests, watcher, onStart, onResult, onFailure) {
       const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
 
       if (!this._runInBand && this._isProcessRunner) {
-        return pMap(
+        const pool = this._pool;
+        const workers = new WeakSet();
+
+        await pMap(
           tests,
-          test => {
+          async test => {
             onStart(test);
 
-            return this._pool
-              .run({ test, updateSnapshot, testNamePattern })
-              .then(
-                result => void onResult(test, result),
-                error => void onFailure(test, error),
-              );
+            try {
+              const result = await pool.run({
+                test,
+                updateSnapshot,
+                testNamePattern,
+              });
+              onResult(test, result);
+            } catch (error) {
+              onFailure(test, error);
+            }
+
+            for (const worker of this._pool.threads) {
+              if (!workers.has(worker)) {
+                workers.add(worker);
+                // Use `process.disconnect()` instead of `process.kill`, so we can collect coverage
+                // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+                worker.process.kill = worker.process.disconnect;
+              }
+            }
           },
           { concurrency: maxWorkers },
         );
+
+        await pool.destroy();
+
+        return;
       }
 
       return Promise.all(

@@ -60,7 +60,7 @@ jobs:
           NODE_ENV: production
           # FULL_TEST: true
         run: |
-          yarn jest tests/format ${{ matrix.additional-options }}
+          yarn c8 yarn jest tests/format ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:
