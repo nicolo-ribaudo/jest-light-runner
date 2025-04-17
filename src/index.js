@@ -43,7 +43,6 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
         runtime,
         maxThreads: maxWorkers,
         env,
-        isolateWorkers: true,
       });
     }
 
@@ -54,44 +53,35 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
      * @param {*} onResult
      * @param {*} onFailure
      */
-    async runTests(tests, watcher, onStart, onResult, onFailure) {
+    runTests(tests, watcher, onStart, onResult, onFailure) {
+      const pool = this._pool;
       const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
 
       if (!this._runInBand && this._isProcessRunner) {
-        const pool = this._pool;
-
-        await pMap(
+        return pMap(
           tests,
-          async test => {
+          test => {
             onStart(test);
 
-            try {
-              const result = await pool.run({
-                test,
-                updateSnapshot,
-                testNamePattern,
-              });
-              onResult(test, result);
-            } catch (error) {
-              onFailure(test, error);
-            }
+            return pool.run({ test, updateSnapshot, testNamePattern }).then(
+              result => void onResult(test, result),
+              error => void onFailure(test, error),
+            );
           },
           { concurrency: maxWorkers },
-        );
+        ).finally(async () => {
+          for (const worker of pool.threads) {
+            // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+            // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+            const originalKill = worker.process.kill;
+            worker.process.kill = () => {
+              worker.process.disconnect();
+              worker.process.kill = originalKill;
+            };
+          }
 
-        for (const worker of this._pool.threads) {
-          // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
-          // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-          const originalKill = worker.process.kill;
-          worker.process.kill = () => {
-            worker.process.disconnect();
-            worker.process.kill = originalKill;
-          };
-        }
-
-        await pool.destroy();
-
-        return;
+          await pool.destroy();
+        });
       }
 
       return Promise.all(
@@ -100,7 +90,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
           mc.port2.onmessage = () => onStart(test);
           mc.port2.unref();
 
-          return this._pool
+          return pool
             .run(
               { test, updateSnapshot, testNamePattern, port: mc.port1 },
               { transferList: [mc.port1] },
