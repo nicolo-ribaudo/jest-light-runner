@@ -82,10 +82,11 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
                 const originalKill = worker.process.kill;
                 // Use `process.disconnect()` instead of `process.kill`, so we can collect coverage
                 // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-                worker.process.kill = () => {
+                worker.process.kill = function foo() {
                   worker.process.disconnect();
                   worker.process.kill = originalKill;
                 };
+console.log('worker.process.kill.name', worker.process.kill.name)
               }
             }
           },
