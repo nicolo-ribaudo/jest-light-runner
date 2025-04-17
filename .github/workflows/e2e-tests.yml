@@ -57,7 +57,8 @@ jobs:
 
       - name: Run tests
         env:
-          FULL_TEST: true
+          NODE_ENV: production
+          # FULL_TEST: true
         run: |
           yarn jest tests/format ${{ matrix.additional-options }}
         working-directory: prettier
@@ -97,10 +98,9 @@ jobs:
 
       - name: Run tests
         env:
-          NODE_ENV: production
           FULL_TEST: true
         run: |
-          yarn c8 jest tests/format ${{ matrix.additional-options }}
+          yarn c8 jest ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:

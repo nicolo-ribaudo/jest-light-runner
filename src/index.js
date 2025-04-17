@@ -78,7 +78,6 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
           { concurrency: maxWorkers },
         );
 
-
         for (const worker of this._pool.threads) {
           // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
           // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
