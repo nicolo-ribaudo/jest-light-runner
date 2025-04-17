@@ -43,6 +43,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
         runtime,
         maxThreads: maxWorkers,
         env,
+        isolateWorkers: true,
       });
     }
 
@@ -58,32 +59,43 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
 
       if (!this._runInBand && this._isProcessRunner) {
+        const workers = new WeakSet();
+
         return pMap(
           tests,
           test => {
             onStart(test);
 
-            return pool.run({ test, updateSnapshot, testNamePattern }).then(
-              result => void onResult(test, result),
-              error => void onFailure(test, error),
-            );
+            return pool
+              .run({ test, updateSnapshot, testNamePattern })
+              .then(
+                result => void onResult(test, result),
+                error => void onFailure(test, error),
+              )
+              .finally(() => {
+                for (const worker of pool.threads) {
+                  if (workers.has(worker)) {
+                    return;
+                  }
+                  workers.add(worker);
+
+                  const { process } = worker;
+                  // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+                  // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+                  // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
+                  const originalKill = process.kill;
+                  process.kill = signal => {
+                    if (!signal) {
+                      process.disconnect();
+                      process.kill = originalKill;
+                    }
+                    return originalKill.call(process, signal);
+                  };
+                }
+              });
           },
           { concurrency: maxWorkers },
         ).finally(async () => {
-          for (const { process } of pool.threads) {
-            // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
-            // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-            // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
-            const originalKill = process.kill;
-            process.kill = signal => {
-              if (!signal) {
-                process.disconnect();
-                process.kill = originalKill;
-              }
-              return originalKill.call(process, signal);
-            };
-          }
-
           await pool.destroy();
         });
       }
