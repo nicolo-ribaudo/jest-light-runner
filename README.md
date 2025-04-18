@@ -28,7 +28,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 
 - `process.chdir`. This runner uses Node.js workers by default, that don't support `process.chdir()`. It provides a simple polyfill so that `process.chdir()` calls still affect the `process.cwd()` result, but they won't affect all the other Node.js API (such as `fs.*` or `path.resolve`), alternatively you can:
 
-  - Create a runner runs in child process
+  - Use child process runner
 
     ```diff
     -  runner: "jest-light-runner",
