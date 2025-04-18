@@ -1,7 +1,7 @@
 import Tinypool from "tinypool";
 import supportsColor from "supports-color";
 import { MessageChannel } from "worker_threads";
-import pMap from "p-map";
+import pLimit from "p-limit";
 
 /** @typedef {import("@jest/test-result").Test} Test */
 
@@ -22,7 +22,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       // We will only run in the main thread when `maxWorkers` is 1.
       // It's always 1 when using the `--runInBand` option.
       // This is so that the tests shares the same global context as Jest only
-      // when explicitly required, to prevent them from accidentally interferring
+      // when explicitly required, to prevent them from accidentally interfering
       // with the test runner. Jest's default runner does not have this problem
       // because it isolates every test in a vm.Context.
       const { maxWorkers } = config;
@@ -31,7 +31,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
         runInBand || this._isProcessRunner
           ? process.env
           : {
-              // Workers don't have a tty; we whant them to inherit
+              // Workers don't have a tty; we want them to inherit
               // the color support level from the main thread.
               FORCE_COLOR: supportsColor.stdout.level,
               ...process.env,
@@ -55,59 +55,62 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
      * @param {*} onResult
      * @param {*} onFailure
      */
-    runTests(tests, watcher, onStart, onResult, onFailure) {
+    async runTests(tests, watcher, onStart, onResult, onFailure) {
       const pool = this._pool;
       const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
+      const isProcessRunner = !this._runInBand && this._isProcessRunner;
 
-      if (!this._runInBand && this._isProcessRunner) {
-        return pMap(
-          tests,
-          test => {
-            onStart(test);
-
-            return pool.run({ test, updateSnapshot, testNamePattern }).then(
-              result => void onResult(test, result),
-              error => void onFailure(test, error),
-            );
-          },
-          { concurrency: maxWorkers },
-        ).finally(async () => {
-          for (const { process } of pool.threads) {
-            // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
-            // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-            // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
-            const originalKill = process.kill;
-            process.kill = signal => {
-              if (!signal) {
-                process.disconnect();
-                process.kill = originalKill;
-                return;
-              }
-              return originalKill.call(process, signal);
-            };
-          }
-
-          await pool.destroy();
-        });
-      }
-
-      return Promise.all(
-        tests.map(test => {
+      let run;
+      if (isProcessRunner) {
+        run = async test => {
+          await onStart(test);
+          return pool.run({ test, updateSnapshot, testNamePattern });
+        };
+      } else {
+        run = test => {
           const mc = new MessageChannel();
           mc.port2.onmessage = () => onStart(test);
           mc.port2.unref();
 
-          return pool
-            .run(
-              { test, updateSnapshot, testNamePattern, port: mc.port1 },
-              { transferList: [mc.port1] },
-            )
-            .then(
-              result => void onResult(test, result),
-              error => void onFailure(test, error),
-            );
-        }),
+          return pool.run(
+            { test, updateSnapshot, testNamePattern, port: mc.port1 },
+            { transferList: [mc.port1] },
+          );
+        };
+      }
+
+      const mutex = pLimit(maxWorkers);
+
+      await Promise.all(
+        tests.map(test =>
+          mutex(async () => {
+            try {
+              onResult(test, await run(test));
+            } catch (error) {
+              onFailure(test, error);
+            }
+          }),
+        ),
       );
+
+      if (isProcessRunner) {
+        for (const { process } of pool.threads) {
+          // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+          // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+          // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
+          const originalKill = process.kill;
+          process.kill = signal => {
+            if (!signal) {
+              process.disconnect();
+              process.kill = originalKill;
+              return;
+            }
+            return originalKill.call(process, signal);
+          };
+        }
+
+        await pool.destroy();
+      }
     }
   };
 
@@ -117,36 +120,16 @@ class InBandTinypool {
   _moduleP;
   _moduleDefault;
 
-  _queue = [];
-  _running = false;
-
   constructor({ filename }) {
     this._moduleP = import(filename);
   }
 
-  run(data) {
-    return new Promise((resolve, reject) => {
-      this._queue.push({ data, resolve, reject });
-      this._runQueue();
-    });
-  }
-
-  async _runQueue() {
-    if (this._running) return;
-    this._running = true;
-
-    try {
-      if (!this._moduleDefault) {
-        this._moduleDefault = (await this._moduleP).default;
-      }
-
-      while (this._queue.length > 0) {
-        const { data, resolve, reject } = this._queue.shift();
-        await this._moduleDefault(data).then(resolve, reject);
-      }
-    } finally {
-      this._running = false;
+  async run(data) {
+    if (!this._moduleDefault) {
+      this._moduleDefault = (await this._moduleP).default;
     }
+
+    return this._moduleDefault(data);
   }
 }
 
