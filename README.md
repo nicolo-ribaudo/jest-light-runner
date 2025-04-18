@@ -32,7 +32,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 
     ```diff
     -  runner: "jest-light-runner",
-    +  runner: "jest-light-runner/subprocess",
+    +  runner: "jest-light-runner/child-process",
     ```
 
   - Use `--runInBand`, tests will run in main thread instead of workers.

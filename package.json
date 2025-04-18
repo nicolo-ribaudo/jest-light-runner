@@ -7,7 +7,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.js",
-    "./subprocess": "./src/subprocess.js"
+    "./child-process": "./src/child-process.js"
   },
   "scripts": {
     "format": "yarn prettier . --write",
