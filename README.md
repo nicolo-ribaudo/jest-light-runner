@@ -16,6 +16,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 - Inline and external snapshots
 - Jest cli options: `--testNamePattern`/`-t`, `--maxWorkers`, `--runInBand`
 - Jest config options: `setupFiles`, `setupFilesAfterEnv`, `snapshotSerializers`, `maxWorkers`, `snapshotFormat`, `snapshotResolver`, `slowTestThreshold`
+- Jest environment variables: `JEST_WORKER_ID`
 
 ### Unsupported Jest features
 
