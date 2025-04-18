@@ -30,16 +30,9 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 
   - Create a runner runs in child process
 
-    ```js
-    // jest-light-process-runner.js
-    import { createRunner } from "jest-light-runner";
-
-    export default createRunner({ runtime: "child_process" });
-    ```
-
     ```diff
     -  runner: "jest-light-runner",
-    +  runner: "./path/to/jest-light-process-runner.js",
+    +  runner: "jest-light-runner/subprocess",
     ```
 
   - Use `--runInBand`, tests will run in main thread instead of workers.
