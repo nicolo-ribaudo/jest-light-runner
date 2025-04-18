@@ -1,6 +1,5 @@
 import Tinypool from "tinypool";
 import supportsColor from "supports-color";
-import { MessageChannel } from "worker_threads";
 import pLimit from "p-limit";
 
 /** @typedef {import("@jest/test-result").Test} Test */
@@ -60,31 +59,13 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
       const isProcessRunner = !this._runInBand && this._isProcessRunner;
 
-      let run;
-      if (isProcessRunner) {
-        run = async test => {
-          await onStart(test);
-          return pool.run({ test, updateSnapshot, testNamePattern });
-        };
-      } else {
-        run = test => {
-          const mc = new MessageChannel();
-          mc.port2.onmessage = () => onStart(test);
-          mc.port2.unref();
-
-          return pool.run(
-            { test, updateSnapshot, testNamePattern, port: mc.port1 },
-            { transferList: [mc.port1] },
-          );
-        };
-      }
-
       const mutex = pLimit(maxWorkers);
 
       await Promise.all(
         tests.map(test =>
           mutex(() =>
-            run(test)
+            onStart(test)
+              .then(() => pool.run({ test, updateSnapshot, testNamePattern }))
               .then(result => determineSlowTestResult(test, result))
               .then(testResult => onResult(test, testResult))
               .catch(error => onFailure(test, error)),

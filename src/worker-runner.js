@@ -48,15 +48,8 @@ const initialSetup = once(async projectConfig => {
   return snapshot.getSerializers().slice();
 });
 
-export default async function run({
-  test,
-  updateSnapshot,
-  testNamePattern,
-  port,
-}) {
+export default async function run({ test, updateSnapshot, testNamePattern }) {
   const projectSnapshotSerializers = await initialSetup(test.context.config);
-
-  port?.postMessage("start");
 
   const testNamePatternRE =
     testNamePattern != null ? new RegExp(testNamePattern, "i") : null;
