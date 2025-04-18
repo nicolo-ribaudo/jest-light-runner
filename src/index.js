@@ -1,109 +1,126 @@
-import { Piscina } from "piscina";
+import Tinypool from "tinypool";
 import supportsColor from "supports-color";
-import { MessageChannel } from "worker_threads";
+import pLimit from "p-limit";
 
 /** @typedef {import("@jest/test-result").Test} Test */
 
-export default class LightRunner {
-  // TODO: Use real private fields when we drop support for Node.js v12
-  _config;
-  _piscina;
+const createRunner = ({ runtime = "worker_threads" } = {}) =>
+  class LightRunner {
+    // TODO: Use real private fields when we drop support for Node.js v12
+    _config;
+    _pool;
+    _isProcessRunner = runtime === "child_process";
+    _runInBand = false;
 
-  constructor(config) {
-    this._config = config;
+    constructor(config) {
+      this._config = config;
 
-    // Jest's logic to decide when to spawn workers and when to run in the
-    // main thread is quite complex:
-    //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts#L13
-    // We will only run in the main thread when `maxWorkers` is 1.
-    // It's always 1 when using the `--runInBand` option.
-    // This is so that the tests shares the same global context as Jest only
-    // when explicitly required, to prevent them from accidentally interferring
-    // with the test runner. Jest's default runner does not have this problem
-    // because it isolates every test in a vm.Context.
-    const { maxWorkers } = config;
-    const runInBand = maxWorkers === 1;
+      // Jest's logic to decide when to spawn workers and when to run in the
+      // main thread is quite complex:
+      //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts#L13
+      // We will only run in the main thread when `maxWorkers` is 1.
+      // It's always 1 when using the `--runInBand` option.
+      // This is so that the tests shares the same global context as Jest only
+      // when explicitly required, to prevent them from accidentally interfering
+      // with the test runner. Jest's default runner does not have this problem
+      // because it isolates every test in a vm.Context.
+      const { maxWorkers } = config;
+      const runInBand = maxWorkers === 1;
+      const env =
+        runInBand || this._isProcessRunner
+          ? process.env
+          : {
+              // Workers don't have a tty; we want them to inherit
+              // the color support level from the main thread.
+              FORCE_COLOR: supportsColor.stdout.level,
+              ...process.env,
+            };
 
-    this._piscina = new (runInBand ? InBandPiscina : Piscina)({
-      filename: new URL("./worker-runner.js", import.meta.url).href,
-      maxThreads: maxWorkers,
-      env: {
-        // Workers don't have a tty; we whant them to inherit
-        // the color support level from the main thread.
-        FORCE_COLOR: supportsColor.stdout.level,
-        // Some applications use this to detect whether they
-        // are running in Jest.
-        JEST_WORKER_ID: "1",
-        ...process.env,
-      },
-    });
-  }
+      this._runInBand = runInBand;
+      this._pool = new (runInBand ? InBandTinypool : Tinypool)({
+        filename: new URL("./worker-runner.js", import.meta.url).href,
+        runtime,
+        minThreads: maxWorkers,
+        maxThreads: maxWorkers,
+        env,
+        trackUnmanagedFds: false,
+      });
+    }
 
-  /**
-   * @param {Array<Test>} tests
-   * @param {*} watcher
-   * @param {*} onStart
-   * @param {*} onResult
-   * @param {*} onFailure
-   */
-  runTests(tests, watcher, onStart, onResult, onFailure) {
-    const { updateSnapshot, testNamePattern } = this._config;
+    /**
+     * @param {Array<Test>} tests
+     * @param {*} watcher
+     * @param {*} onStart
+     * @param {*} onResult
+     * @param {*} onFailure
+     */
+    async runTests(tests, watcher, onStart, onResult, onFailure) {
+      const pool = this._pool;
+      const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
+      const isProcessRunner = !this._runInBand && this._isProcessRunner;
 
-    return Promise.all(
-      tests.map(test => {
-        const mc = new MessageChannel();
-        mc.port2.onmessage = () => onStart(test);
-        mc.port2.unref();
+      const mutex = pLimit(maxWorkers);
 
-        return this._piscina
-          .run(
-            { test, updateSnapshot, testNamePattern, port: mc.port1 },
-            { transferList: [mc.port1] }
-          )
-          .then(
-            result => void onResult(test, result),
-            error => void onFailure(test, error)
-          );
-      })
-    );
-  }
-}
+      await Promise.all(
+        tests.map(test =>
+          mutex(() =>
+            onStart(test)
+              .then(() => pool.run({ test, updateSnapshot, testNamePattern }))
+              .then(result => determineSlowTestResult(test, result))
+              .then(testResult => onResult(test, testResult))
+              .catch(error => onFailure(test, error)),
+          ),
+        ),
+      );
 
-// Exposes an API similar to Piscina, but it uses dynamic import()
+      if (isProcessRunner) {
+        for (const { process } of pool.threads) {
+          // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+          // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+          // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
+          const originalKill = process.kill;
+          process.kill = signal => {
+            if (!signal) {
+              process.disconnect();
+              process.kill = originalKill;
+              return;
+            }
+            return originalKill.call(process, signal);
+          };
+        }
+
+        await pool.destroy();
+      }
+    }
+  };
+
+// Exposes an API similar to Tinypool, but it uses dynamic import()
 // rather than worker_threads.
-class InBandPiscina {
+class InBandTinypool {
   _moduleP;
   _moduleDefault;
-
-  _queue = [];
-  _running = false;
 
   constructor({ filename }) {
     this._moduleP = import(filename);
   }
 
-  run(data) {
-    return new Promise((resolve, reject) => {
-      this._queue.push({ data, resolve, reject });
-      this._runQueue();
-    });
-  }
-
-  async _runQueue() {
-    if (this._running) return;
-    this._running = true;
-
-    try {
-      if (!this._moduleDefault) {
-        this._moduleDefault = (await this._moduleP).default;
-      }
-
-      while (this._queue.length > 0) {
-        const { data, resolve, reject } = this._queue.shift();
-        await this._moduleDefault(data).then(resolve, reject);
-      }
-    } finally {
-      this._running = false;
+  async run(data) {
+    if (!this._moduleDefault) {
+      this._moduleDefault = (await this._moduleP).default;
     }
+
+    return this._moduleDefault(data);
   }
 }
+
+// https://github.com/jest-community/create-jest-runner/blob/b807921b3b287ab0207038034be8f5f772f1709c/lib/createJestRunner.ts#L16
+function determineSlowTestResult(test, result) {
+  // See: https://github.com/facebook/jest/blob/acd7c83c8365140f4ecf44a456ff7366ffa31fa2/packages/jest-runner/src/runTest.ts#L287
+  if (result.perfStats.runtime / 1000 > test.context.config.slowTestThreshold) {
+    return { ...result, perfStats: { ...result.perfStats, slow: true } };
+  }
+  return result;
+}
+
+export default createRunner();
+export { createRunner };

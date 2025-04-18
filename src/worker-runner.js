@@ -1,11 +1,10 @@
 import path from "path";
-import { fileURLToPath, pathToFileURL } from "url";
+import { pathToFileURL } from "url";
 import { performance } from "perf_hooks";
 import * as snapshot from "jest-snapshot";
-import { expect } from "expect";
+import { jestExpect as expect } from "@jest/expect";
 import * as circus from "jest-circus";
-import { inspect } from "util";
-import { isWorkerThread } from "piscina";
+import Tinypool, {workerId} from "tinypool";
 
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
@@ -15,13 +14,16 @@ const initialSetup = once(async projectConfig => {
   // process.chdir, that we use multiple times in our tests.
   // We can "polyfill" it for process.cwd() usage, but it
   // won't affect path.* and fs.* functions.
-  if (isWorkerThread) {
+  if (Tinypool.isWorkerThread) {
+    process.env.JEST_WORKER_ID = String(workerId);
     const startCwd = process.cwd();
     let cwd = startCwd;
     process.cwd = () => cwd;
     process.chdir = dir => {
       cwd = path.resolve(cwd, dir);
     };
+  } else {
+    process.env.JEST_WORKER_ID = '1';
   }
 
   for (const setupFile of projectConfig.setupFiles) {
@@ -49,15 +51,8 @@ const initialSetup = once(async projectConfig => {
   return snapshot.getSerializers().slice();
 });
 
-export default async function run({
-  test,
-  updateSnapshot,
-  testNamePattern,
-  port,
-}) {
+export default async function run({ test, updateSnapshot, testNamePattern }) {
   const projectSnapshotSerializers = await initialSetup(test.context.config);
-
-  port.postMessage("start");
 
   const testNamePatternRE =
     testNamePattern != null ? new RegExp(testNamePattern, "i") : null;
@@ -70,7 +65,7 @@ export default async function run({
   const { tests, hasFocusedTests } = await loadTests(test.path);
 
   const snapshotResolver = await snapshot.buildSnapshotResolver(
-    test.context.config
+    test.context.config,
   );
   const snapshotState = new snapshot.SnapshotState(
     snapshotResolver.resolveSnapshotPath(test.path),
@@ -78,7 +73,7 @@ export default async function run({
       prettierPath: "prettier",
       updateSnapshot,
       snapshotFormat: test.context.config.snapshotFormat,
-    }
+    },
   );
   expect.setState({ snapshotState, testPath: test.path });
 
@@ -86,13 +81,16 @@ export default async function run({
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
   stats.end = performance.now();
 
-  snapshotState.save();
+  const result = addSnapshotData(
+    toTestResult(stats, results, test),
+    snapshotState,
+  );
 
   // Restore the project-level serializers, so that serializers
   // installed by one test file don't leak to other files.
   arrayReplace(snapshot.getSerializers(), projectSnapshotSerializers);
 
-  return toTestResult(stats, results, test);
+  return result;
 }
 
 async function loadTests(testFile) {
@@ -108,7 +106,7 @@ async function runTestBlock(
   testNamePatternRE,
   results,
   stats,
-  ancestors = []
+  ancestors = [],
 ) {
   await runHooks("beforeAll", block, results, stats, ancestors);
 
@@ -131,7 +129,7 @@ async function runTestBlock(
         testNamePatternRE,
         results,
         stats,
-        nextAncestors
+        nextAncestors,
       );
     } else if (type === "test") {
       await runHooks("beforeEach", block, results, stats, nextAncestors, true);
@@ -170,9 +168,11 @@ async function runTest(fn, stats, results, ancestors, name) {
   });
 
   const errors = [];
+  const start = performance.now();
   await callAsync(fn).catch(error => {
     errors.push(error);
   });
+  const end = performance.now();
 
   // Get suppressed errors from ``jest-matchers`` that weren't thrown during
   // test execution and add them to the test result, potentially failing
@@ -188,7 +188,13 @@ async function runTest(fn, stats, results, ancestors, name) {
   } else {
     stats.passes++;
   }
-  results.push({ ancestors, title: name, errors, skipped: false });
+  results.push({
+    ancestors,
+    title: name,
+    duration: end - start,
+    errors,
+    skipped: false,
+  });
 }
 
 async function runHooks(hook, block, results, stats, ancestors, runInParents) {
@@ -273,26 +279,62 @@ function toTestResult(stats, tests, { path, context }) {
     testResults: tests.map(test => {
       return {
         ancestorTitles: test.ancestors,
-        duration: test.duration / 1000,
+        duration: test.duration,
         failureMessages: test.errors.length ? [failureToString(test)] : [],
         fullName: test.title,
         numPassingAsserts: test.errors.length > 0 ? 1 : 0,
         status: test.skipped
           ? "pending"
           : test.errors.length > 0
-          ? "failed"
-          : "passed",
+            ? "failed"
+            : "passed",
         title: test.title,
       };
     }),
   };
 }
 
+// https://github.com/facebook/jest/blob/7d8d01c4854aa83e82cc11cefdd084a7d9b8bdfc/packages/jest-jasmine2/src/index.ts#L206
+function addSnapshotData(results, snapshotState) {
+  results.testResults.forEach(({ fullName, status }) => {
+    if (status === "pending" || status === "failed") {
+      // if test is skipped or failed, we don't want to mark
+      // its snapshots as obsolete.
+      snapshotState.markSnapshotsAsCheckedForTest(fullName);
+    }
+  });
+
+  const uncheckedCount = snapshotState.getUncheckedCount();
+  const uncheckedKeys = snapshotState.getUncheckedKeys();
+
+  if (uncheckedCount) {
+    snapshotState.removeUncheckedKeys();
+  }
+
+  const status = snapshotState.save();
+  results.snapshot.fileDeleted = status.deleted;
+  results.snapshot.added = snapshotState.added;
+  results.snapshot.matched = snapshotState.matched;
+  results.snapshot.unmatched = snapshotState.unmatched;
+  results.snapshot.updated = snapshotState.updated;
+  results.snapshot.unchecked = !status.deleted ? uncheckedCount : 0;
+  // Copy the array to prevent memory leaks
+  results.snapshot.uncheckedKeys = Array.from(uncheckedKeys);
+
+  return results;
+}
+
 function failureToString(test) {
   return (
     test.ancestors.concat(test.title).join(" > ") +
     "\n" +
-    test.errors.map(error => inspect(error).replace(/^/gm, "    ")).join("\n") +
+    test.errors
+      .map(error =>
+        error.stack
+          .replace(/\n.*jest-light-runner.*/g, "")
+          .replace(/^/gm, "    "),
+      )
+      .join("\n") +
     "\n"
   );
 }

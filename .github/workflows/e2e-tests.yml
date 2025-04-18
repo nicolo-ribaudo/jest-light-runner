@@ -9,23 +9,24 @@ jobs:
     name: Prettier
     strategy:
       matrix:
-        additional-options: ["--runInBand"]
+        additional-options: ["--maxWorkers=2", "--runInBand"]
+    env:
+      YARN_IGNORE_NODE: 1
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: jest-light-runner
 
       - name: Checkout "prettier"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: prettier/prettier
-          ref: next
           path: prettier
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
 
       - name: Build
         run: |
@@ -33,8 +34,19 @@ jobs:
           yarn build
         working-directory: prettier
 
+      # `jest@30.0.0-alpha.2` is the last version that supports Node.js v14
+      - name: Install jest@30.0.0-alpha.2
+        run: node ./scripts/prepare-nodejs-14-test.js
+        working-directory: prettier
+
+      - name: Downgrade yarn to v3
+        run: |
+          yarn set version 3
+          cat .yarnrc.yml
+        working-directory: prettier
+
       - name: Setup Node.js v14
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "14"
 
@@ -44,8 +56,51 @@ jobs:
         working-directory: prettier
 
       - name: Run tests
+        env:
+          NODE_ENV: production
+          # FULL_TEST: true
         run: |
-          yarn test:dist tests/format ${{ matrix.additional-options }}
+          yarn jest tests/format ${{ matrix.additional-options }}
+        working-directory: prettier
+
+  prettier-next:
+    name: Prettier-next
+    strategy:
+      matrix:
+        additional-options: ["--maxWorkers=2", "--runInBand"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: jest-light-runner
+
+      - name: Checkout "prettier-next"
+        uses: actions/checkout@v4
+        with:
+          repository: prettier/prettier
+          ref: next
+          path: prettier
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+
+      - name: Build
+        run: |
+          yarn install --immutable
+          yarn build
+        working-directory: prettier
+
+      - name: Update jest-light-runner
+        run: |
+          yarn up jest-light-runner@file:../jest-light-runner
+        working-directory: prettier
+
+      - name: Run tests
+        env:
+          FULL_TEST: true
+        run: |
+          yarn c8 jest ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:
@@ -56,15 +111,15 @@ jobs:
         additional-options: ["--maxWorkers=2", "--runInBand"]
     steps:
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: jest-light-runner
 
       - name: Checkout "babel"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: babel/babel
           path: babel
