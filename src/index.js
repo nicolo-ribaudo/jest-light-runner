@@ -44,6 +44,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
         minThreads: maxWorkers,
         maxThreads: maxWorkers,
         env,
+        trackUnmanagedFds: false,
       });
     }
 
