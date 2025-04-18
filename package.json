@@ -6,7 +6,8 @@
   "repository": "nicolo-ribaudo/jest-light-runner",
   "type": "module",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./child-process": "./src/child-process.js"
   },
   "scripts": {
     "format": "yarn prettier . --write",
