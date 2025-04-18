@@ -19,7 +19,7 @@
     "jest-each": "^30.0.0-alpha.1",
     "jest-mock": "^30.0.0-alpha.1",
     "jest-snapshot": "^30.0.0-alpha.1",
-    "p-map": "^7.0.3",
+    "p-limit": "^6.2.0",
     "supports-color": "^9.2.1",
     "tinypool": "0.8.4"
   },
