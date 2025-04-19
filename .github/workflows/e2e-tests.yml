@@ -146,6 +146,8 @@ jobs:
           node-version: "14"
 
       - name: Test
+        env:
+          BABEL_ENV: test
         run: |
           node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
         working-directory: babel
