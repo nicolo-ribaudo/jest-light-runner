@@ -4,10 +4,18 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   prettier:
     name: Prettier
     strategy:
+      fail-fast: false
       matrix:
         additional-options: ["--maxWorkers=2", "--runInBand"]
     env:
@@ -66,6 +74,7 @@ jobs:
   prettier-next:
     name: Prettier-next
     strategy:
+      fail-fast: false
       matrix:
         additional-options: ["--maxWorkers=2", "--runInBand"]
     runs-on: ubuntu-latest
@@ -107,6 +116,7 @@ jobs:
     name: Babel
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         additional-options: ["--maxWorkers=2", "--runInBand"]
     steps:
