@@ -11,12 +11,7 @@ import Tinypool, { workerId } from "tinypool";
 
 let workerData = Tinypool.workerData;
 let projectState;
-/**
- *
- * @param {{
- * }} param0
- * @returns
- */
+
 async function initialSetup() {
   if (!workerData && process.__tinypool_state__?.isChildProcess) {
     workerData = await new Promise(resolve => {
@@ -47,11 +42,7 @@ async function initialSetup() {
 
   // Setup `JEST_WORKER_ID` environment variable
   // https://jestjs.io/docs/environment-variables
-  if (runtime === "main_thread") {
-    process.env.JEST_WORKER_ID = "1";
-  } else {
-    process.env.JEST_WORKER_ID = String(workerId);
-  }
+  process.env.JEST_WORKER_ID = workerId || 1;
 
   // Node.js workers (worker_threads) don't support
   // process.chdir, that we use multiple times in our tests.
@@ -114,9 +105,7 @@ export default async function run(testFilePath) {
   const stats = { passes: 0, failures: 0, pending: 0, start: 0, end: 0 };
   /** @type {Array<InternalTestResult>} */
   const results = [];
-
   const { tests, hasFocusedTests } = await loadTests(testFilePath);
-
   const snapshotState = new snapshot.SnapshotState(
     snapshotResolver.resolveSnapshotPath(testFilePath),
     {
@@ -394,7 +383,7 @@ function arrayReplace(array, replacement) {
   array.splice(0, array.length, ...replacement);
 }
 
-// For MainThreadTinypool to init
+// For MainThreadTinypool to set worker data
 export function setWorkerData(data) {
   workerData = data;
 }

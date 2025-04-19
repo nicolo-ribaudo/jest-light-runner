@@ -127,7 +127,7 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
 // rather than worker_threads.
 class MainThreadTinypool {
   _moduleP;
-  _module;
+  _worker;
   _workerData;
   _runTest;
 
@@ -141,7 +141,7 @@ class MainThreadTinypool {
 
     module.setWorkerData(this._workerData);
 
-    this._module = module;
+    this._worker = module;
     this._runTest = module.default;
   }
 
@@ -150,7 +150,7 @@ class MainThreadTinypool {
   }
 
   destroy() {
-    this._module.cleanup();
+    this._worker.cleanup();
   }
 }
 
