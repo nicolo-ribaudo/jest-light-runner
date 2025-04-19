@@ -140,6 +140,12 @@ jobs:
           echo "" > test/testSetupFile.js
         working-directory: babel
 
+      - name: Downgrade yarn to v3
+        run: |
+          yarn set version 3
+          cat .yarnrc.yml
+        working-directory: babel
+
       - name: Setup Node.js v14
         uses: actions/setup-node@v4
         with:
