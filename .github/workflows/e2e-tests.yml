@@ -152,7 +152,7 @@ jobs:
           BABEL_ENV: test
         working-directory: babel
 
-      - name: Build for Node.js 14 
+      - name: Build for Node.js 14
         run: |
           make -j build-standalone-ci
         env:
