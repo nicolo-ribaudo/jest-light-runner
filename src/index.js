@@ -66,8 +66,7 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
           mutex(() =>
             onStart(test)
               .then(() => pool.run({ test, updateSnapshot, testNamePattern }))
-              .then(result => determineSlowTestResult(test, result))
-              .then(testResult => onResult(test, testResult))
+              .then(result => onResult(test, result))
               .catch(error => onFailure(test, error)),
           ),
         ),
@@ -111,15 +110,6 @@ class InBandTinypool {
 
     return this._moduleDefault(data);
   }
-}
-
-// https://github.com/jest-community/create-jest-runner/blob/b807921b3b287ab0207038034be8f5f772f1709c/lib/createJestRunner.ts#L16
-function determineSlowTestResult(test, result) {
-  // See: https://github.com/facebook/jest/blob/acd7c83c8365140f4ecf44a456ff7366ffa31fa2/packages/jest-runner/src/runTest.ts#L287
-  if (result.perfStats.runtime / 1000 > test.context.config.slowTestThreshold) {
-    return { ...result, perfStats: { ...result.perfStats, slow: true } };
-  }
-  return result;
 }
 
 export default createRunner();
