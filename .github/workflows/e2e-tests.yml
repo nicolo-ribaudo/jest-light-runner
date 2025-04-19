@@ -127,7 +127,11 @@ jobs:
       - name: Build
         run: |
           yarn install --immutable
-          make build-no-bundle
+          make -j build-standalone-ci
+        env:
+          BABEL_ENV: test-legacy
+          BABEL_8_BREAKING: false
+          STRIP_BABEL_8_FLAG: true
         working-directory: babel
 
       - name: Update jest-light-runner
