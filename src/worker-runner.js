@@ -80,7 +80,7 @@ async function initialSetup() {
 
   state.projectSnapshotSerializers = snapshot.getSerializers().slice();
   state.snapshotResolver = await snapshot.buildSnapshotResolver(projectConfig);
-  state.testNamePattern =
+  state.testNamePatternRE =
     globalConfig.testNamePattern !== null
       ? new RegExp(globalConfig.testNamePattern, "i")
       : null;
@@ -94,11 +94,10 @@ export default async function run(testFilePath) {
   }
 
   const {
-    globalConfig,
     projectConfig,
     projectSnapshotSerializers,
     snapshotResolver,
-    testNamePattern,
+    testNamePatternRE,
   } = projectState;
 
   /** @type {Stats} */
@@ -117,7 +116,7 @@ export default async function run(testFilePath) {
   expect.setState({ snapshotState, testPath: testFilePath });
 
   stats.start = performance.now();
-  await runTestBlock(tests, hasFocusedTests, testNamePattern, results, stats);
+  await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
   stats.end = performance.now();
 
   const result = addSnapshotData(
