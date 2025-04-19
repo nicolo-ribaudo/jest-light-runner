@@ -158,5 +158,5 @@ jobs:
         env:
           BABEL_ENV: test
         run: |
-          node ./node_modules/.bin/jest babel-core babel-preset-env --ci ${{ matrix.additional-options }}
+          node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
         working-directory: babel
