@@ -67,6 +67,7 @@ jobs:
         run: |
           yarn set version 3
           cat .yarnrc.yml
+          yarn
         working-directory: prettier
 
       - name: Setup Node.js v14
