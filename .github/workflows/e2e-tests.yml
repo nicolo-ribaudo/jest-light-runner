@@ -19,8 +19,8 @@ jobs:
       matrix:
         additional-options:
           # integration tests can't run in worker
-          - "tests/format --runner jest-light-runner --maxWorkers=2"
-          - "--runner jest-light-runner/child-process --maxWorkers=2"
+          - "tests/format --runner jest-light-runner"
+          - "--runner jest-light-runner/child-process"
           - "--runInBand"
     env:
       YARN_IGNORE_NODE: 1
@@ -89,8 +89,8 @@ jobs:
       fail-fast: false
       matrix:
         additional-options:
-          - "--runner jest-light-runner --maxWorkers=2"
-          - "--runner jest-light-runner/child-process --maxWorkers=2"
+          - "--runner jest-light-runner"
+          - "--runner jest-light-runner/child-process"
           - "--runInBand"
     steps:
       - name: Setup Node.js
