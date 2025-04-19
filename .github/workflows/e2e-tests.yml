@@ -140,7 +140,12 @@ jobs:
           echo "" > test/testSetupFile.js
         working-directory: babel
 
+      - name: Setup Node.js v14
+        uses: actions/setup-node@v4
+        with:
+          node-version: "14"
+
       - name: Test
         run: |
-          yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
+          yarn jest ${{ matrix.additional-options }}
         working-directory: babel
