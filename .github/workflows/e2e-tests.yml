@@ -60,13 +60,8 @@ jobs:
 
       # `jest@30.0.0-alpha.2` is the last version that supports Node.js v14
       - name: Install jest@30.0.0-alpha.2
-        run: node ./scripts/prepare-nodejs-14-test.js
-        working-directory: prettier
-
-      - name: Downgrade yarn to v3
         run: |
-          yarn set version 3
-          cat .yarnrc.yml
+          node ./scripts/prepare-nodejs-14-test.js
           yarn
         working-directory: prettier
 
@@ -75,12 +70,12 @@ jobs:
         with:
           node-version: "14"
 
-      - name: Run tests
+      - name: Run tests on Node.js 14
         env:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          yarn c8 yarn jest ${{ matrix.additional-options }}
+          yarn c8 node ./node_modules/.bin/jest ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:
