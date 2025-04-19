@@ -80,8 +80,9 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
 
             for (const listener of listeners) {
               listener({ type: "jest-light-runner-worker-data", workerData });
-              listeners.delete(listener);
             }
+
+            listeners.clear();
           },
         };
         poolRunOption = { channel };
