@@ -127,11 +127,7 @@ jobs:
       - name: Build
         run: |
           yarn install --immutable
-          make -j build-standalone-ci
-        env:
-          BABEL_ENV: test-legacy
-          BABEL_8_BREAKING: false
-          STRIP_BABEL_8_FLAG: true
+          make build-no-bundle
         working-directory: babel
 
       - name: Update jest-light-runner
@@ -149,12 +145,28 @@ jobs:
           node ./packages/babel-node/scripts/list-node-flags.js
         working-directory: babel
 
+      - name: Test
+        env:
+          BABEL_ENV: test
+        run: |
+          node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
+        working-directory: babel
+
+      - name: Build for Node.js 14 
+        run: |
+          make -j build-standalone-ci
+        env:
+          BABEL_ENV: test-legacy
+          BABEL_8_BREAKING: false
+          STRIP_BABEL_8_FLAG: true
+        working-directory: babel
+
       - name: Setup Node.js v14
         uses: actions/setup-node@v4
         with:
           node-version: "14"
 
-      - name: Test
+      - name: Test on Node.js 14
         env:
           BABEL_ENV: test
         run: |
