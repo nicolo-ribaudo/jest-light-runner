@@ -75,7 +75,7 @@ jobs:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          yarn c8 node ./node_modules/.bin/jest ${{ matrix.additional-options }}
+          node ./node_modules/.bin/jest ${{ matrix.additional-options }}
         working-directory: prettier
 
   babel:
