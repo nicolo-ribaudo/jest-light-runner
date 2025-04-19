@@ -88,6 +88,7 @@ async function initialSetup() {
   }
 
   state.projectSnapshotSerializers = snapshot.getSerializers().slice();
+  state.snapshotResolver = await snapshot.buildSnapshotResolver(projectConfig);
 
   return state;
 }
@@ -97,8 +98,12 @@ export default async function run(testFilePath) {
     projectState = await initialSetup();
   }
 
-  const { globalConfig, projectConfig, projectSnapshotSerializers } =
-    projectState;
+  const {
+    globalConfig,
+    projectConfig,
+    projectSnapshotSerializers,
+    snapshotResolver,
+  } = projectState;
 
   /** @type {Stats} */
   const stats = { passes: 0, failures: 0, pending: 0, start: 0, end: 0 };
@@ -107,7 +112,6 @@ export default async function run(testFilePath) {
 
   const { tests, hasFocusedTests } = await loadTests(testFilePath);
 
-  const snapshotResolver = await snapshot.buildSnapshotResolver(projectConfig);
   const snapshotState = new snapshot.SnapshotState(
     snapshotResolver.resolveSnapshotPath(testFilePath),
     {
