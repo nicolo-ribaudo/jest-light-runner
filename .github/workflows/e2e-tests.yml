@@ -140,16 +140,9 @@ jobs:
           echo "" > test/testSetupFile.js
         working-directory: babel
 
-      - name: Ensure that @babel/node's list of node flags is up to date
-        run: |
-          node ./packages/babel-node/scripts/list-node-flags.js
-        working-directory: babel
-
       - name: Test
         run: |
-          node ./node_modules/.bin/jest babel-core babel-preset-env --ci ${{ matrix.additional-options }}
-        env:
-          BABEL_ENV: test
+          yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
         working-directory: babel
 
       - name: Build for Node.js 14
