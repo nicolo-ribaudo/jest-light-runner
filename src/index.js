@@ -66,7 +66,7 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
         workerData,
       });
 
-      let poolRunOption;
+      let poolRunOptions;
       if (runtime === "child_process") {
         const listeners = new Set();
         const channel = {
@@ -85,7 +85,7 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
             listeners.clear();
           },
         };
-        poolRunOption = { channel };
+        poolRunOptions = { channel };
       }
 
       await pool.init?.();
@@ -96,7 +96,7 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
         tests.map(test =>
           mutex(() =>
             onStart(test)
-              .then(() => pool.run(test.path, poolRunOption))
+              .then(() => pool.run(test.path, poolRunOptions))
               .then(result => onResult(test, result))
               .catch(error => onFailure(test, error)),
           ),
