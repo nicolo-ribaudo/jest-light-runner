@@ -101,8 +101,8 @@ jobs:
       - name: Checkout "babel"
         uses: actions/checkout@v4
         with:
-           repository: babel/babel
-           path: babel
+          repository: babel/babel
+          path: babel
 
       - name: Build
         run: |
