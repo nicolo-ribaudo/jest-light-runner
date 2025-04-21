@@ -44,14 +44,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
 
-      - name: Build
+      - name: Install dependencies
         run: |
           yarn install --immutable
-          yarn build
-
-      - name: Update jest-light-runner
-        run: |
           yarn up jest-light-runner@file:../jest-light-runner
+
+      - name: Build
+        run: yarn build
 
       - name: Run tests
         env:
@@ -102,13 +101,9 @@ jobs:
           repository: babel/babel
           path: e2e-test
 
-      - name: Build
+      - name: Install dependencies
         run: |
           yarn install --immutable
-          make build-no-bundle
-
-      - name: Update jest-light-runner
-        run: |
           yarn up jest-light-runner@file:../jest-light-runner
 
       - name: Disable Babel's setupFilesAfterEnv
@@ -120,7 +115,7 @@ jobs:
           make -j test-ci-coverage
           yarn test:esm ${{ matrix.additional-options }}
 
-      - name: Build for Node.js 14
+      - name: Build
         run: |
           make -j build-standalone-ci
         env:
