@@ -134,23 +134,6 @@ jobs:
           STRIP_BABEL_8_FLAG: true
         working-directory: babel
 
-      - name: Setup Node.js v14
-        uses: actions/setup-node@v4
-        with:
-          node-version: "14"
-
-      - name: Test on Node.js 14
-        run: |
-          node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
-        env:
-          BABEL_ENV: test
-        working-directory: babel
-
-      - name: Setup Node.js v12
-        uses: actions/setup-node@v4
-        with:
-          node-version: "12"
-
       - name: Downgrade Jest and jest-light-runner for node == 12
         run: |
           yarn up jest@28
@@ -159,6 +142,11 @@ jobs:
           # problems with the "path" module: https://github.com/facebook/jest/issues/9656
           yarn dedupe
         working-directory: babel
+
+      - name: Setup Node.js v12
+        uses: actions/setup-node@v4
+        with:
+          node-version: "12"
 
       - name: Test on Node.js 12
         run: |
