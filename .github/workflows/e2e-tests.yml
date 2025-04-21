@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    working-directory: e2e-test
+
 jobs:
   prettier:
     name: Prettier
@@ -18,12 +22,10 @@ jobs:
       fail-fast: false
       matrix:
         additional-options:
-          # integration tests can't run in worker
-          - "tests/format --runner jest-light-runner"
+          - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
           - "--runInBand"
     env:
-      YARN_IGNORE_NODE: 1
       YARN_ENABLE_IMMUTABLE_INSTALLS: false
     runs-on: ubuntu-latest
     steps:
@@ -36,52 +38,41 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: prettier/prettier
-          path: prettier
+          path: e2e-test
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
 
-      - name: Build
-        run: |
-          yarn install --immutable
-          yarn build
-        working-directory: prettier
-
-      - name: Update jest-light-runner
+      - name: Prepare
         run: |
           yarn up jest-light-runner@file:../jest-light-runner
-        working-directory: prettier
+          yarn build
 
       - name: Run tests
         env:
           FULL_TEST: true
         run: |
           yarn c8 yarn jest ${{ matrix.additional-options }}
-        working-directory: prettier
 
-      # `jest@30.0.0-alpha.2` is the last version that supports Node.js v14
-      - name: Install jest@30.0.0-alpha.2
+      - name: Prepare for Node.js v14
         run: |
           node ./scripts/prepare-nodejs-14-test.js
           yarn
-        working-directory: prettier
 
       - name: Setup Node.js v14
         uses: actions/setup-node@v4
         with:
           node-version: "14"
 
-      - name: Run tests on Node.js 14
+      - name: Run tests on Node.js v14
         env:
           NODE_ENV: production
           FULL_TEST: true
         run: |
           node ./node_modules/.bin/jest ${{ matrix.additional-options }}
-        working-directory: prettier
 
   babel:
     name: Babel
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -89,6 +80,7 @@ jobs:
           - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
           - "--runInBand"
+    runs-on: ubuntu-latest
     steps:
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -102,46 +94,34 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: babel/babel
-          path: babel
+          path: e2e-test
 
-      - name: Build
-        run: |
-          yarn install --immutable
-          make build-no-bundle
-        working-directory: babel
-
-      - name: Update jest-light-runner
+      - name: Prepare
         run: |
           yarn up jest-light-runner@file:../jest-light-runner
-        working-directory: babel
-
-      - name: Disable Babel's setupFilesAfterEnv
-        run: |
+          # Disable Babel's setupFilesAfterEnv
           echo "" > test/testSetupFile.js
-        working-directory: babel
 
-      - name: Test
+      - name: Run tests
         run: |
-          yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
-        working-directory: babel
+          make -j test-ci-coverage
+          yarn test:esm ${{ matrix.additional-options }}
 
-      - name: Build for Node.js 14
-        run: |
-          make -j build-standalone-ci
+      - name: Prepare for Node.js v14
         env:
           BABEL_ENV: test-legacy
           BABEL_8_BREAKING: false
           STRIP_BABEL_8_FLAG: true
-        working-directory: babel
+        run: |
+          make -j build-standalone-ci
 
       - name: Setup Node.js v14
         uses: actions/setup-node@v4
         with:
           node-version: "14"
 
-      - name: Test on Node.js 14
-        run: |
-          node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
+      - name: Run tests on Node.js v14
         env:
           BABEL_ENV: test
-        working-directory: babel
+        run: |
+          node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
