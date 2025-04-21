@@ -9,21 +9,51 @@ import Tinypool, { workerId } from "tinypool";
 /** @typedef {{ failures: number, passes: number, pending: number, start: number, end: number }} Stats */
 /** @typedef {{ ancestors: string[], title: string, duration: number, errors: Error[], skipped: boolean }} InternalTestResult */
 
-const initialSetup = once(async projectConfig => {
+let workerData = Tinypool.workerData;
+let projectState;
+
+async function initialSetup() {
+  if (!workerData && process.__tinypool_state__?.isChildProcess) {
+    workerData = await new Promise(resolve => {
+      const listener = message => {
+        if (message?.type === "jest-light-runner-worker-data") {
+          process.off("message", listener);
+          resolve(message.workerData);
+        }
+      };
+      process.on("message", listener);
+      process.send("jest-light-runner-get-worker-data");
+    });
+  }
+
+  const { globalConfig, projectConfig, runtime } = workerData;
+
+  const originalDirectory = process.cwd();
+
+  let state = {
+    globalConfig,
+    projectConfig,
+    runtime,
+    JEST_WORKER_ID: process.env.JEST_WORKER_ID,
+    originalDirectory: originalDirectory,
+    originalCwd: process.cwd,
+    originalChdir: process.chdir,
+  };
+
+  // Setup `JEST_WORKER_ID` environment variable
+  // https://jestjs.io/docs/environment-variables
+  process.env.JEST_WORKER_ID = workerId || 1;
+
   // Node.js workers (worker_threads) don't support
   // process.chdir, that we use multiple times in our tests.
   // We can "polyfill" it for process.cwd() usage, but it
   // won't affect path.* and fs.* functions.
-  if (Tinypool.isWorkerThread) {
-    process.env.JEST_WORKER_ID = String(workerId);
-    const startCwd = process.cwd();
-    let cwd = startCwd;
-    process.cwd = () => cwd;
-    process.chdir = dir => {
-      cwd = path.resolve(cwd, dir);
+  if (runtime === "worker_threads") {
+    let current = originalDirectory;
+    process.cwd = () => current;
+    process.chdir = directory => {
+      current = path.resolve(current, directory);
     };
-  } else {
-    process.env.JEST_WORKER_ID = "1";
   }
 
   for (const setupFile of projectConfig.setupFiles) {
@@ -48,41 +78,49 @@ const initialSetup = once(async projectConfig => {
     if (typeof setup === "function") await setup();
   }
 
-  return snapshot.getSerializers().slice();
-});
+  state.projectSnapshotSerializers = snapshot.getSerializers().slice();
+  state.snapshotResolver = await snapshot.buildSnapshotResolver(projectConfig);
+  state.testNamePatternRE =
+    globalConfig.testNamePattern !== null
+      ? new RegExp(globalConfig.testNamePattern, "i")
+      : null;
 
-export default async function run({ test, updateSnapshot, testNamePattern }) {
-  const projectSnapshotSerializers = await initialSetup(test.context.config);
+  return state;
+}
 
-  const testNamePatternRE =
-    testNamePattern != null ? new RegExp(testNamePattern, "i") : null;
+export default async function run(testFilePath) {
+  if (!projectState) {
+    projectState = await initialSetup();
+  }
+
+  const {
+    projectConfig,
+    projectSnapshotSerializers,
+    snapshotResolver,
+    testNamePatternRE,
+  } = projectState;
 
   /** @type {Stats} */
   const stats = { passes: 0, failures: 0, pending: 0, start: 0, end: 0 };
   /** @type {Array<InternalTestResult>} */
   const results = [];
-
-  const { tests, hasFocusedTests } = await loadTests(test.path);
-
-  const snapshotResolver = await snapshot.buildSnapshotResolver(
-    test.context.config,
-  );
+  const { tests, hasFocusedTests } = await loadTests(testFilePath);
   const snapshotState = new snapshot.SnapshotState(
-    snapshotResolver.resolveSnapshotPath(test.path),
+    snapshotResolver.resolveSnapshotPath(testFilePath),
     {
       prettierPath: "prettier",
-      updateSnapshot,
-      snapshotFormat: test.context.config.snapshotFormat,
+      updateSnapshot: projectConfig.updateSnapshot,
+      snapshotFormat: projectConfig.snapshotFormat,
     },
   );
-  expect.setState({ snapshotState, testPath: test.path });
+  expect.setState({ snapshotState, testPath: testFilePath });
 
   stats.start = performance.now();
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
   stats.end = performance.now();
 
   const result = addSnapshotData(
-    toTestResult(stats, results, test),
+    toTestResult(stats, results, testFilePath, projectConfig),
     snapshotState,
   );
 
@@ -241,10 +279,11 @@ function callAsync(fn) {
  *
  * @param {Stats} stats
  * @param {Array<InternalTestResult>} tests
- * @param {import("@jest/test-result").Test} testInput
+ * @param {string} testFilePath
+ * @param {import("@jest/test-result").Test["context"]["config"]} projectConfig
  * @returns {import("@jest/test-result").TestResult}
  */
-function toTestResult(stats, tests, { path, context }) {
+function toTestResult(stats, tests, testFilePath, projectConfig) {
   const { start, end } = stats;
   const runtime = end - start;
 
@@ -262,7 +301,7 @@ function toTestResult(stats, tests, { path, context }) {
       start,
       end,
       runtime: Math.round(runtime), // ms precision
-      slow: runtime / 1000 > context.config.slowTestThreshold,
+      slow: runtime / 1000 > projectConfig.slowTestThreshold,
     },
     skipped: false,
     snapshot: {
@@ -275,7 +314,7 @@ function toTestResult(stats, tests, { path, context }) {
     },
     sourceMaps: {},
     testExecError: null,
-    testFilePath: path,
+    testFilePath,
     testResults: tests.map(test => {
       return {
         ancestorTitles: test.ancestors,
@@ -339,17 +378,43 @@ function failureToString(test) {
   );
 }
 
-function once(fn) {
-  let called = false;
-  let result;
-  return function () {
-    if (called) return result;
-    called = true;
-    result = fn.apply(this, arguments);
-    return result;
-  };
-}
-
 function arrayReplace(array, replacement) {
   array.splice(0, array.length, ...replacement);
+}
+
+// For MainThreadTinypool to set worker data
+export function setWorkerData(data) {
+  workerData = data;
+}
+
+// For MainThreadTinypool to cleanup
+export async function cleanup() {
+  const { JEST_WORKER_ID, originalDirectory, originalCwd, originalChdir } =
+    projectState;
+
+  // Restore `process.env.JEST_WORKER_ID`
+  if (JEST_WORKER_ID === undefined) {
+    delete process.env.JEST_WORKER_ID;
+  } else {
+    process.env.JEST_WORKER_ID = JEST_WORKER_ID;
+  }
+
+  const currentDirectory = process.cwd();
+
+  if (originalDirectory !== currentDirectory) {
+    process.chdir(originalDirectory);
+  }
+
+  // Restore `process.cwd`
+  if (process.cwd !== originalCwd) {
+    process.cwd = originalCwd;
+  }
+
+  // Restore `process.chdir`
+  if (process.chdir !== originalChdir) {
+    process.chdir = originalChdir;
+  }
+
+  workerData = undefined;
+  projectState = undefined;
 }

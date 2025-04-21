@@ -3,18 +3,15 @@ import supportsColor from "supports-color";
 import pLimit from "p-limit";
 
 /** @typedef {import("@jest/test-result").Test} Test */
+/** @typedef {"main_thread" | "worker_threads" | "child_process"} Runtime */
 
-const createRunner = ({ runtime = "worker_threads" } = {}) =>
+const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
   class LightRunner {
     // TODO: Use real private fields when we drop support for Node.js v12
-    _config;
+    _globalConfig;
     _pool;
-    _isProcessRunner = runtime === "child_process";
-    _runInBand = false;
 
-    constructor(config) {
-      this._config = config;
-
+    constructor(globalConfig) {
       // Jest's logic to decide when to spawn workers and when to run in the
       // main thread is quite complex:
       //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts#L13
@@ -24,27 +21,11 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
       // when explicitly required, to prevent them from accidentally interfering
       // with the test runner. Jest's default runner does not have this problem
       // because it isolates every test in a vm.Context.
-      const { maxWorkers } = config;
-      const runInBand = maxWorkers === 1;
-      const env =
-        runInBand || this._isProcessRunner
-          ? process.env
-          : {
-              // Workers don't have a tty; we want them to inherit
-              // the color support level from the main thread.
-              FORCE_COLOR: supportsColor.stdout.level,
-              ...process.env,
-            };
+      const runInBand = globalConfig.maxWorkers === 1;
+      const runtime = runInBand ? "main_thread" : preferredRuntime;
 
-      this._runInBand = runInBand;
-      this._pool = new (runInBand ? InBandTinypool : Tinypool)({
-        filename: new URL("./worker-runner.js", import.meta.url).href,
-        runtime,
-        minThreads: maxWorkers,
-        maxThreads: maxWorkers,
-        env,
-        trackUnmanagedFds: false,
-      });
+      this._globalConfig = globalConfig;
+      this._runtime = runtime;
     }
 
     /**
@@ -55,9 +36,59 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
      * @param {*} onFailure
      */
     async runTests(tests, watcher, onStart, onResult, onFailure) {
-      const pool = this._pool;
-      const { updateSnapshot, testNamePattern, maxWorkers } = this._config;
-      const isProcessRunner = !this._runInBand && this._isProcessRunner;
+      const projectConfig = tests[0].context.config;
+
+      if (tests.some(test => test.context.config !== projectConfig)) {
+        throw new Error("Unexpected error, all tests should have same config.");
+      }
+
+      const { _runtime: runtime, _globalConfig: globalConfig } = this;
+      const { maxWorkers } = globalConfig;
+      const env =
+        runtime === "worker_threads"
+          ? {
+              // Workers don't have a tty; we want them to inherit
+              // the color support level from the main thread.
+              FORCE_COLOR: supportsColor.stdout.level,
+              ...process.env,
+            }
+          : process.env;
+      const workerData = { globalConfig, projectConfig, runtime };
+      const pool = new (
+        runtime === "main_thread" ? MainThreadTinypool : Tinypool
+      )({
+        filename: new URL("./worker-runner.js", import.meta.url).href,
+        runtime,
+        minThreads: maxWorkers,
+        maxThreads: maxWorkers,
+        env,
+        trackUnmanagedFds: false,
+        workerData,
+      });
+
+      let poolRunOptions;
+      if (runtime === "child_process") {
+        const listeners = new Set();
+        const channel = {
+          onMessage(listener) {
+            listeners.add(listener);
+          },
+          postMessage(message) {
+            if (message !== "jest-light-runner-get-worker-data") {
+              return;
+            }
+
+            for (const listener of listeners) {
+              listener({ type: "jest-light-runner-worker-data", workerData });
+            }
+
+            listeners.clear();
+          },
+        };
+        poolRunOptions = { channel };
+      }
+
+      await pool.init?.();
 
       const mutex = pLimit(maxWorkers);
 
@@ -65,14 +96,14 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
         tests.map(test =>
           mutex(() =>
             onStart(test)
-              .then(() => pool.run({ test, updateSnapshot, testNamePattern }))
+              .then(() => pool.run(test.path, poolRunOptions))
               .then(result => onResult(test, result))
               .catch(error => onFailure(test, error)),
           ),
         ),
       );
 
-      if (isProcessRunner) {
+      if (runtime === "child_process") {
         for (const { process } of pool.threads) {
           // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
           // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
@@ -87,28 +118,40 @@ const createRunner = ({ runtime = "worker_threads" } = {}) =>
             return originalKill.call(process, signal);
           };
         }
-
-        await pool.destroy();
       }
+
+      await pool.destroy();
     }
   };
 
 // Exposes an API similar to Tinypool, but it uses dynamic import()
 // rather than worker_threads.
-class InBandTinypool {
+class MainThreadTinypool {
   _moduleP;
-  _moduleDefault;
+  _worker;
+  _workerData;
+  _runTest;
 
-  constructor({ filename }) {
+  constructor({ filename, workerData }) {
     this._moduleP = import(filename);
+    this._workerData = workerData;
+  }
+
+  async init() {
+    const module = await this._moduleP;
+
+    module.setWorkerData(this._workerData);
+
+    this._worker = module;
+    this._runTest = module.default;
   }
 
   async run(data) {
-    if (!this._moduleDefault) {
-      this._moduleDefault = (await this._moduleP).default;
-    }
+    return this._runTest(data);
+  }
 
-    return this._moduleDefault(data);
+  destroy() {
+    this._worker.cleanup();
   }
 }
 
