@@ -18,8 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         additional-options:
-          # integration tests can't run in worker
-          - "tests/format --runner jest-light-runner"
+          - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
           - "--runInBand"
     env:
