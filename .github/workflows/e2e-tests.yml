@@ -117,7 +117,8 @@ jobs:
 
       - name: Test
         run: |
-          yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
+          make -j test-ci-coverage
+          yarn test:esm ${{ matrix.additional-options }}
 
       - name: Build for Node.js 14
         run: |
