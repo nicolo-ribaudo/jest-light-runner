@@ -9,7 +9,7 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
   class LightRunner {
     // TODO: Use real private fields when we drop support for Node.js v12
     _globalConfig;
-    _pool;
+    _testRunners = new Map();
 
     constructor(globalConfig) {
       // Jest's logic to decide when to spawn workers and when to run in the
@@ -36,91 +36,101 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
      * @param {*} onFailure
      */
     async runTests(tests, watcher, onStart, onResult, onFailure) {
-      const projectConfig = tests[0].context.config;
-
-      if (tests.some(test => test.context.config !== projectConfig)) {
-        throw new Error("Unexpected error, all tests should have same config.");
-      }
-
       const { _runtime: runtime, _globalConfig: globalConfig } = this;
-      const { maxWorkers } = globalConfig;
-      const env =
-        runtime === "worker_threads"
-          ? {
-              // Workers don't have a tty; we want them to inherit
-              // the color support level from the main thread.
-              FORCE_COLOR: supportsColor.stdout.level,
-              ...process.env,
-            }
-          : process.env;
-      const workerData = { globalConfig, projectConfig, runtime };
-      const pool = new (
-        runtime === "main_thread" ? MainThreadTinypool : Tinypool
-      )({
-        filename: new URL("./worker-runner.js", import.meta.url).href,
-        runtime,
-        minThreads: maxWorkers,
-        maxThreads: maxWorkers,
-        env,
-        trackUnmanagedFds: false,
-        workerData,
-      });
-
-      let poolRunOptions;
-      if (runtime === "child_process") {
-        const listeners = new Set();
-        const channel = {
-          onMessage(listener) {
-            listeners.add(listener);
-          },
-          postMessage(message) {
-            if (message !== "jest-light-runner-get-worker-data") {
-              return;
-            }
-
-            for (const listener of listeners) {
-              listener({ type: "jest-light-runner-worker-data", workerData });
-            }
-
-            listeners.clear();
-          },
-        };
-        poolRunOptions = { channel };
-      }
-
-      await pool.init?.();
-
-      const mutex = pLimit(maxWorkers);
+      const mutex = pLimit(globalConfig.maxWorkers);
 
       await Promise.all(
         tests.map(test =>
           mutex(() =>
             onStart(test)
-              .then(() => pool.run(test.path, poolRunOptions))
+              .then(() => this._runTest(test))
               .then(result => onResult(test, result))
               .catch(error => onFailure(test, error)),
           ),
         ),
       );
 
-      if (runtime === "child_process") {
-        for (const { process } of pool.threads) {
-          // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
-          // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-          // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
-          const originalKill = process.kill;
-          process.kill = signal => {
-            if (!signal) {
-              process.disconnect();
-              process.kill = originalKill;
-              return;
-            }
-            return originalKill.call(process, signal);
-          };
+      const runners = this._testRunners;
+      for (const [, { pool }] of runners) {
+        if (runtime === "child_process") {
+          for (const { process } of pool.threads) {
+            // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+            // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+            // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
+            const originalKill = process.kill;
+            process.kill = signal => {
+              if (!signal) {
+                process.disconnect();
+                process.kill = originalKill;
+                return;
+              }
+              return originalKill.call(process, signal);
+            };
+          }
         }
+
+        await pool.destroy();
       }
 
-      await pool.destroy();
+      runners.clear();
+    }
+
+    _runTest(test) {
+      const runners = this._testRunners;
+      const projectConfig = test.context.config;
+      if (!runners.has(projectConfig)) {
+        const { _runtime: runtime, _globalConfig: globalConfig } = this;
+        const { maxWorkers } = globalConfig;
+        const env =
+          runtime === "worker_threads"
+            ? {
+                // Workers don't have a tty; we want them to inherit
+                // the color support level from the main thread.
+                FORCE_COLOR: supportsColor.stdout.level,
+                ...process.env,
+              }
+            : process.env;
+        const workerData = { globalConfig, projectConfig, runtime };
+        const pool = new (
+          runtime === "main_thread" ? MainThreadTinypool : Tinypool
+        )({
+          filename: new URL("./worker-runner.js", import.meta.url).href,
+          runtime,
+          minThreads: maxWorkers,
+          maxThreads: maxWorkers,
+          env,
+          trackUnmanagedFds: false,
+          workerData,
+        });
+
+        let poolRunOption;
+        if (runtime === "child_process") {
+          const listeners = new Set();
+          const channel = {
+            onMessage(listener) {
+              listeners.add(listener);
+            },
+            postMessage(message) {
+              if (message !== "jest-light-runner-get-worker-data") {
+                return;
+              }
+
+              for (const listener of listeners) {
+                listener({ type: "jest-light-runner-worker-data", workerData });
+                listeners.delete(listener);
+              }
+            },
+          };
+          poolRunOption = { channel };
+        }
+
+        runners.set(projectConfig, {
+          pool,
+          run: test => pool.run(test.path, poolRunOption),
+        });
+      }
+
+      return runners.get(projectConfig).run(test);
     }
   };
 
@@ -130,28 +140,26 @@ class MainThreadTinypool {
   _moduleP;
   _worker;
   _workerData;
-  _runTest;
 
   constructor({ filename, workerData }) {
     this._moduleP = import(filename);
     this._workerData = workerData;
   }
 
-  async init() {
-    const module = await this._moduleP;
-
-    module.setWorkerData(this._workerData);
-
-    this._worker = module;
-    this._runTest = module.default;
-  }
-
   async run(data) {
-    return this._runTest(data);
+    if (!this._worker) {
+      const module = await this._moduleP;
+
+      module.setWorkerData(this._workerData);
+
+      this._worker = module;
+    }
+
+    return this._worker.default(data);
   }
 
   destroy() {
-    this._worker.cleanup();
+    this._worker?.cleanup();
   }
 }
 
