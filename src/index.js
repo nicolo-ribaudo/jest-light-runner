@@ -163,7 +163,7 @@ class MainThreadTinypool {
   }
 
   destroy() {
-    this._module.cleanup();
+    this._worker.cleanup();
   }
 }
 
