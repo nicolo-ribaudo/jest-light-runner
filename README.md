@@ -15,7 +15,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 - Jest timer mocks: `jest.useFakeTimers`, `jest.useRealTimers`, `jest.setSystemTime`, `jest.advanceTimersByTime`
 - Inline and external snapshots
 - Jest cli options: `--testNamePattern`/`-t`, `--maxWorkers`, `--runInBand`
-- Jest config options: `setupFiles`, `setupFilesAfterEnv`, `snapshotSerializers`, `maxWorkers`, `snapshotFormat`, `snapshotResolver`, `slowTestThreshold`, `projects`
+- Jest config options: `setupFiles`, `setupFilesAfterEnv`, `snapshotSerializers`, `maxWorkers`, `snapshotFormat`, `snapshotResolver`, `slowTestThreshold`, `prettierPath`, `projects`
 - Jest environment variables: `JEST_WORKER_ID`
 
 ### Unsupported Jest features
