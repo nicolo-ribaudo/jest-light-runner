@@ -140,8 +140,6 @@ class MainThreadTinypool {
   _moduleP;
   _worker;
   _workerData;
-  _runTest;
-  _initialized = false;
 
   constructor({ filename, workerData }) {
     this._moduleP = import(filename);
@@ -149,21 +147,19 @@ class MainThreadTinypool {
   }
 
   async run(data) {
-    if (!this._initialized) {
+    if (!this._worker) {
       const module = await this._moduleP;
 
       module.setWorkerData(this._workerData);
 
       this._worker = module;
-      this._runTest = module.default;
-      this._initialized = true;
     }
 
-    return this._runTest(data);
+    return this._worker.default(data);
   }
 
   destroy() {
-    this._worker.cleanup();
+    this._worker?.cleanup();
   }
 }
 
