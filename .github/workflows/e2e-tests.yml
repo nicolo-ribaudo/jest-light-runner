@@ -44,13 +44,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
 
-      - name: Install dependencies
+      - name: Prepare
         run: |
-          yarn install --immutable
           yarn up jest-light-runner@file:../jest-light-runner
-
-      - name: Build
-        run: yarn build
+          yarn build
 
       - name: Run tests
         env:
@@ -58,8 +55,7 @@ jobs:
         run: |
           yarn c8 yarn jest ${{ matrix.additional-options }}
 
-      # `jest@30.0.0-alpha.2` is the last version that supports Node.js v14
-      - name: Install jest@30.0.0-alpha.2
+      - name: Prepare for Node.js 14
         run: |
           node ./scripts/prepare-nodejs-14-test.js
           yarn
@@ -101,21 +97,18 @@ jobs:
           repository: babel/babel
           path: e2e-test
 
-      - name: Install dependencies
+      - name: Prepare
         run: |
-          yarn install --immutable
           yarn up jest-light-runner@file:../jest-light-runner
-
-      - name: Disable Babel's setupFilesAfterEnv
-        run: |
+          # Disable Babel's setupFilesAfterEnv
           echo "" > test/testSetupFile.js
 
-      - name: Test
+      - name: Run tests
         run: |
           make -j test-ci-coverage
           yarn test:esm ${{ matrix.additional-options }}
 
-      - name: Build
+      - name: Prepare for Node.js 14
         run: |
           make -j build-standalone-ci
         env:
@@ -128,7 +121,7 @@ jobs:
         with:
           node-version: "14"
 
-      - name: Test on Node.js 14
+      - name: Run tests on Node.js 14
         run: |
           node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
         env:
