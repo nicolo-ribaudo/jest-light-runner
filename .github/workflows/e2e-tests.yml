@@ -125,7 +125,7 @@ jobs:
           yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
         working-directory: babel
 
-      - name: Build for legacy test
+      - name: Build for Node.js 14
         run: |
           make -j build-standalone-ci
         env:
@@ -134,21 +134,12 @@ jobs:
           STRIP_BABEL_8_FLAG: true
         working-directory: babel
 
-      - name: Downgrade Jest and jest-light-runner for node == 12
-        run: |
-          yarn up jest@28
-          cd packages/babel-helper-transform-fixture-test-runner && yarn up jest-diff@28 && cd ../..
-          # Deduplicate dependencies, because duplicate copies of graceful-fs cause
-          # problems with the "path" module: https://github.com/facebook/jest/issues/9656
-          yarn dedupe
-        working-directory: babel
-
-      - name: Setup Node.js v12
+      - name: Setup Node.js v14
         uses: actions/setup-node@v4
         with:
-          node-version: "12"
+          node-version: "14"
 
-      - name: Test on Node.js 12
+      - name: Test on Node.js 14
         run: |
           node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
         env:
