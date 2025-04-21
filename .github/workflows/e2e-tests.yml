@@ -125,7 +125,7 @@ jobs:
           yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
         working-directory: babel
 
-      - name: Build for Node.js 14
+      - name: Build for Node.js 12
         run: |
           make -j build-standalone-ci
         env:
@@ -137,9 +137,9 @@ jobs:
       - name: Setup Node.js v14
         uses: actions/setup-node@v4
         with:
-          node-version: "14"
+          node-version: "12"
 
-      - name: Test on Node.js 14
+      - name: Test on Node.js 12
         run: |
           node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
         env:
