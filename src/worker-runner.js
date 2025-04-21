@@ -108,7 +108,7 @@ export default async function run(testFilePath) {
   const snapshotState = new snapshot.SnapshotState(
     snapshotResolver.resolveSnapshotPath(testFilePath),
     {
-      prettierPath: "prettier",
+      prettierPath: projectConfig.prettierPath,
       updateSnapshot: projectConfig.updateSnapshot,
       snapshotFormat: projectConfig.snapshotFormat,
     },
