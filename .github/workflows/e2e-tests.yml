@@ -165,6 +165,7 @@ jobs:
           # Deduplicate dependencies, because duplicate copies of graceful-fs cause
           # problems with the "path" module: https://github.com/facebook/jest/issues/9656
           yarn dedupe
+        working-directory: babel
 
       - name: Test on Node.js 12
         run: |
