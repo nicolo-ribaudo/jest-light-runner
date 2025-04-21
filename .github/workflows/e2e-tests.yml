@@ -98,10 +98,17 @@ jobs:
         with:
           path: jest-light-runner
 
+      # - name: Checkout "babel"
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: babel/babel
+      #     path: babel
+
       - name: Checkout "babel"
         uses: actions/checkout@v4
         with:
-          repository: babel/babel
+          repository: fisker/babel
+          ref: error-stacks
           path: babel
 
       - name: Build
@@ -125,7 +132,7 @@ jobs:
           yarn jest babel-core babel-preset-env ${{ matrix.additional-options }}
         working-directory: babel
 
-      - name: Build for Node.js 12
+      - name: Build for legacy test
         run: |
           make -j build-standalone-ci
         env:
@@ -137,7 +144,28 @@ jobs:
       - name: Setup Node.js v14
         uses: actions/setup-node@v4
         with:
+          node-version: "14"
+
+      - name: Test on Node.js 14
+        run: |
+          node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
+        env:
+          BABEL_ENV: test
+        working-directory: babel
+
+      - name: Setup Node.js v12
+        uses: actions/setup-node@v4
+        with:
           node-version: "12"
+
+      - name: Downgrade Jest and jest-light-runner for node == 12
+        run: |
+          yarn up jest@28
+          cd packages/babel-helper-transform-fixture-test-runner && yarn up jest-diff@28 && cd ../..
+          yarn up jest-light-runner@0.3.0
+          # Deduplicate dependencies, because duplicate copies of graceful-fs cause
+          # problems with the "path" module: https://github.com/facebook/jest/issues/9656
+          yarn dedupe
 
       - name: Test on Node.js 12
         run: |
