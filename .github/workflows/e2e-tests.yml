@@ -21,6 +21,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        node:
+          - ""
+          - "14"
         additional-options:
           - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
@@ -49,22 +52,27 @@ jobs:
           yarn build
 
       - name: Run tests
+        if: ${{ matrix.node != '14' }}
         env:
           FULL_TEST: true
         run: |
           yarn c8 yarn jest ${{ matrix.additional-options }}
 
       - name: Prepare for Node.js v14
+        if: ${{ matrix.node == '14' }}
         run: |
-          node ./scripts/prepare-nodejs-14-test.js
+          node ./scripts/prepare-test-for-legacy-nodejs.js --node-version ${{ matrix.node }}
+          cat package.json
           yarn
 
       - name: Setup Node.js v14
         uses: actions/setup-node@v4
+        if: ${{ matrix.node == '14' }}
         with:
           node-version: "14"
 
       - name: Run tests on Node.js v14
+        if: ${{ matrix.node == '14' }}
         env:
           NODE_ENV: production
           FULL_TEST: true
@@ -76,6 +84,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        node:
+          - ""
+          - "14"
         additional-options:
           - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
@@ -103,11 +114,13 @@ jobs:
           echo "" > test/testSetupFile.js
 
       - name: Run tests
+        if: ${{ matrix.node != '14' }}
         run: |
           make -j test-ci-coverage
           yarn test:esm ${{ matrix.additional-options }}
 
       - name: Prepare for Node.js v14
+        if: ${{ matrix.node == '14' }}
         env:
           BABEL_ENV: test-legacy
           BABEL_8_BREAKING: false
@@ -116,11 +129,13 @@ jobs:
           make -j build-standalone-ci
 
       - name: Setup Node.js v14
+        if: ${{ matrix.node == '14' }}
         uses: actions/setup-node@v4
         with:
           node-version: "14"
 
       - name: Run tests on Node.js v14
+        if: ${{ matrix.node == '14' }}
         env:
           BABEL_ENV: test
         run: |
