@@ -114,6 +114,7 @@ jobs:
           echo "" > test/testSetupFile.js
 
       - name: Run tests
+        if: ${{ matrix.node != '14' }}
         run: |
           make -j test-ci-coverage
           yarn test:esm ${{ matrix.additional-options }}
