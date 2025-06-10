@@ -61,7 +61,7 @@ jobs:
       - name: Prepare for Node.js v14
         if: ${{ matrix.node == '14' }}
         run: |
-          node ./scripts/prepare-test-for-legacy-nodejs.js
+          node ./scripts/prepare-test-for-legacy-nodejs.js ${{ matrix.node != '14' }}
           cat package.json
           yarn
 
