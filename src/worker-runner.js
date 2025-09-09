@@ -105,7 +105,6 @@ export default async function run(testFilePath) {
   const stats = { passes: 0, failures: 0, pending: 0, start: 0, end: 0 };
   /** @type {Array<InternalTestResult>} */
   const results = [];
-  const { tests, hasFocusedTests } = await loadTests(testFilePath);
 
   // https://github.com/jestjs/jest/blob/0c44e271f2e4308c20c81c67e12bacbbb0b2d68f/packages/jest-jasmine2/src/setup_jest_globals.ts#L106C1-L116C6
   const snapshotState = new snapshot.SnapshotState(
@@ -117,6 +116,8 @@ export default async function run(testFilePath) {
     },
   );
   expect.setState({ snapshotState, testPath: testFilePath });
+
+  const { tests, hasFocusedTests } = await loadTests(testFilePath);
 
   stats.start = performance.now();
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
