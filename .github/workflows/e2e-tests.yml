@@ -95,6 +95,9 @@ jobs:
     steps:
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        with:
+          node-version: latest
+          check-latest: true
 
       - name: Checkout
         uses: actions/checkout@v4
