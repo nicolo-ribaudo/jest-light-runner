@@ -86,7 +86,7 @@ jobs:
       matrix:
         node:
           - ""
-          - "14"
+          - "18"
         additional-options:
           - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
@@ -117,13 +117,13 @@ jobs:
           echo "" > test/testSetupFile.js
 
       - name: Run tests
-        if: ${{ matrix.node != '14' }}
+        if: ${{ matrix.node != '18' }}
         run: |
           make -j test-ci-coverage
           yarn test:esm ${{ matrix.additional-options }}
 
-      - name: Prepare for Node.js v14
-        if: ${{ matrix.node == '14' }}
+      - name: Prepare for Node.js v18
+        if: ${{ matrix.node == '18' }}
         env:
           BABEL_ENV: test-legacy
           BABEL_8_BREAKING: false
@@ -131,14 +131,14 @@ jobs:
         run: |
           make -j build-standalone-ci
 
-      - name: Setup Node.js v14
-        if: ${{ matrix.node == '14' }}
+      - name: Setup Node.js v18
+        if: ${{ matrix.node == '18' }}
         uses: actions/setup-node@v4
         with:
-          node-version: "14"
+          node-version: "18"
 
-      - name: Run tests on Node.js v14
-        if: ${{ matrix.node == '14' }}
+      - name: Run tests on Node.js v18
+        if: ${{ matrix.node == '18' }}
         env:
           BABEL_ENV: test
         run: |
