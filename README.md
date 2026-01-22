@@ -28,7 +28,6 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 ### Partially supported features
 
 - `process.chdir`. This runner uses Node.js workers by default, that don't support `process.chdir()`. It provides a simple polyfill so that `process.chdir()` calls still affect the `process.cwd()` result, but they won't affect all the other Node.js API (such as `fs.*` or `path.resolve`), alternatively you can:
-
   - Use child process runner
 
     ```diff
