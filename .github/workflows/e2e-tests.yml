@@ -77,7 +77,7 @@ jobs:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          node ./node_modules/.bin/jest ${{ matrix.additional-options }}
+          yarn test:node14 ${{ matrix.additional-options }}
 
   babel:
     name: Babel
