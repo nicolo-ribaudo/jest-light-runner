@@ -65,18 +65,18 @@ jobs:
           cat package.json
           yarn
 
-      - name: Setup Node.js v14
-        uses: actions/setup-node@v4
-        if: ${{ matrix.node == '14' }}
-        with:
-          node-version: "14"
-
       - name: Install yarn@3
         if: ${{ matrix.node == '14' }}
         run: |
           yarn set version 3
           yarn config set httpRetry 10
           cat .yarnrc.yml
+
+      - name: Setup Node.js v14
+        uses: actions/setup-node@v4
+        if: ${{ matrix.node == '14' }}
+        with:
+          node-version: "14"
 
       - name: Run tests on Node.js v14
         if: ${{ matrix.node == '14' }}
