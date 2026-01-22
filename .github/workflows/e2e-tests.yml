@@ -71,13 +71,20 @@ jobs:
         with:
           node-version: "14"
 
+      - name: Install yarn@3
+        if: ${{ matrix.node == '14' }}
+        run: |
+          yarn set version 3
+          yarn config set httpRetry 10
+          cat .yarnrc.yml
+
       - name: Run tests on Node.js v14
         if: ${{ matrix.node == '14' }}
         env:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          npm run test:production-node14 ${{ matrix.additional-options }}
+          yarn test:production-node14 ${{ matrix.additional-options }}
 
   babel:
     name: Babel
