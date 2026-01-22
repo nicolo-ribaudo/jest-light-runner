@@ -1,4 +1,4 @@
-# jest-light-runner
+# jest-light-runner [![Npm Version](https://img.shields.io/npm/v/jest-light-runner.svg?style=flat-square)](https://www.npmjs.com/package/jest-light-runner)
 
 A Jest runner that runs tests directly in bare Node.js, without virtualizing the environment.
 
