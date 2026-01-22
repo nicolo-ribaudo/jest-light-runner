@@ -61,6 +61,9 @@ jobs:
       - name: Prepare for Node.js v14
         if: ${{ matrix.node == '14' }}
         run: |
+          yarn set version 3
+          yarn config set httpRetry 10
+          cat .yarnrc.yml
           node ./scripts/prepare-test-for-legacy-nodejs.js --node-version ${{ matrix.node }}
           cat package.json
           yarn
@@ -77,7 +80,7 @@ jobs:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          node ./node_modules/.bin/jest ${{ matrix.additional-options }}
+          yarn test:production-node14 ${{ matrix.additional-options }}
 
   babel:
     name: Babel
