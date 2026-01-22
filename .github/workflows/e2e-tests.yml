@@ -33,18 +33,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: jest-light-runner
 
       - name: Checkout "prettier"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: prettier/prettier
           path: e2e-test
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
 
       - name: Prepare
         run: |
@@ -69,7 +69,7 @@ jobs:
           yarn
 
       - name: Setup Node.js v14
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         if: ${{ matrix.node == '14' }}
         with:
           node-version: "14"
@@ -97,18 +97,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: latest
           check-latest: true
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: jest-light-runner
 
       - name: Checkout "babel"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: babel/babel
           path: e2e-test
@@ -136,7 +136,7 @@ jobs:
 
       - name: Setup Node.js v18
         if: ${{ matrix.node == '18' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "18"
 

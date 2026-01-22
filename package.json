@@ -14,18 +14,18 @@
     "lint": "yarn prettier . --check"
   },
   "dependencies": {
-    "@jest/expect": "^30.0.0",
-    "@jest/fake-timers": "^30.0.0",
-    "jest-circus": "^30.0.0",
-    "jest-each": "^30.0.0",
-    "jest-mock": "^30.0.0",
-    "jest-snapshot": "^30.0.0",
+    "@jest/expect": "^30.2.0",
+    "@jest/fake-timers": "^30.2.0",
+    "jest-circus": "^30.2.0",
+    "jest-each": "^30.2.0",
+    "jest-mock": "^30.2.0",
+    "jest-snapshot": "^30.2.0",
     "p-limit": "^6.2.0",
     "supports-color": "^9.2.1",
     "tinypool": "0.8.4"
   },
   "devDependencies": {
-    "prettier": "^3.5.3"
+    "prettier": "^3.8.1"
   },
   "peerDependencies": {
     "jest": "^27.5.0 || ^28.0.0 || ^29.0.0|| ^30.0.0"
@@ -37,5 +37,5 @@
   "files": [
     "src"
   ],
-  "packageManager": "yarn@4.0.1"
+  "packageManager": "yarn@4.12.0"
 }
