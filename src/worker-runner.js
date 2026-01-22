@@ -115,7 +115,11 @@ export default async function run(testFilePath) {
       updateSnapshot: globalConfig.updateSnapshot,
     },
   );
-  expect.setState({ snapshotState, testPath: testFilePath });
+  expect.setState({
+    snapshotState,
+    testPath: testFilePath,
+    expand: globalConfig.expand,
+  });
 
   const { tests, hasFocusedTests } = await loadTests(testFilePath);
 
