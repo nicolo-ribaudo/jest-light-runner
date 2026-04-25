@@ -7,9 +7,9 @@ import pLimit from "p-limit";
 
 const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
   class LightRunner {
-    // TODO: Use real private fields when we drop support for Node.js v12
-    _globalConfig;
-    _testRunners = new Map();
+    #globalConfig;
+    #testRunners = new Map();
+    #runtime;
 
     constructor(globalConfig) {
       // Jest's logic to decide when to spawn workers and when to run in the
@@ -24,8 +24,8 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
       const runInBand = globalConfig.maxWorkers === 1;
       const runtime = runInBand ? "main_thread" : preferredRuntime;
 
-      this._globalConfig = globalConfig;
-      this._runtime = runtime;
+      this.#globalConfig = globalConfig;
+      this.#runtime = runtime;
     }
 
     /**
@@ -36,21 +36,22 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
      * @param {*} onFailure
      */
     async runTests(tests, watcher, onStart, onResult, onFailure) {
-      const { _runtime: runtime, _globalConfig: globalConfig } = this;
+      const runtime = this.#runtime;
+      const globalConfig = this.#globalConfig;
       const mutex = pLimit(globalConfig.maxWorkers);
 
       await Promise.all(
         tests.map(test =>
           mutex(() =>
             onStart(test)
-              .then(() => this._runTest(test))
+              .then(() => this.#runTest(test))
               .then(result => onResult(test, result))
               .catch(error => onFailure(test, error)),
           ),
         ),
       );
 
-      const runners = this._testRunners;
+      const runners = this.#testRunners;
       for (const [, { pool }] of runners) {
         if (runtime === "child_process") {
           for (const { process } of pool.threads) {
@@ -75,11 +76,12 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
       runners.clear();
     }
 
-    _runTest(test) {
-      const runners = this._testRunners;
+    #runTest(test) {
+      const runners = this.#testRunners;
       const projectConfig = test.context.config;
       if (!runners.has(projectConfig)) {
-        const { _runtime: runtime, _globalConfig: globalConfig } = this;
+        const runtime = this.#runtime;
+        const globalConfig = this.#globalConfig;
         const { maxWorkers } = globalConfig;
         const env =
           runtime === "worker_threads"
@@ -137,29 +139,29 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
 // Exposes an API similar to Tinypool, but it uses dynamic import()
 // rather than worker_threads.
 class MainThreadTinypool {
-  _moduleP;
-  _worker;
-  _workerData;
+  #moduleP;
+  #worker;
+  #workerData;
 
   constructor({ filename, workerData }) {
-    this._moduleP = import(filename);
-    this._workerData = workerData;
+    this.#moduleP = import(filename);
+    this.#workerData = workerData;
   }
 
   async run(data) {
-    if (!this._worker) {
-      const module = await this._moduleP;
+    if (!this.#worker) {
+      const module = await this.#moduleP;
 
-      module.setWorkerData(this._workerData);
+      module.setWorkerData(this.#workerData);
 
-      this._worker = module;
+      this.#worker = module;
     }
 
-    return this._worker.default(data);
+    return this.#worker.default(data);
   }
 
   destroy() {
-    this._worker?.cleanup();
+    this.#worker?.cleanup();
   }
 }
 
