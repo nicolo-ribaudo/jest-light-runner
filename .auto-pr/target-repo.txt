@@ -1,0 +1,1 @@
+nicolo-ribaudo/jest-light-runner

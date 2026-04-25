@@ -1,0 +1,1 @@
+- [x] Update stale Node.js v17.x docs URL to version-agnostic URL in README.md
