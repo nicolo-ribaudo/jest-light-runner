@@ -82,7 +82,7 @@ jobs:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          yarn test:production-node14 ${{ matrix.additional-options }}
+          yarn test:production ${{ matrix.additional-options }}
 
   babel:
     name: Babel
