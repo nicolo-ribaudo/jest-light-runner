@@ -5,13 +5,13 @@ import pLimit from "p-limit";
 /** @typedef {import("@jest/test-result").Test} Test */
 /** @typedef {"main_thread" | "worker_threads" | "child_process"} Runtime */
 
-const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
+const createRunner = runnerOptions =>
   class LightRunner {
     // TODO: Use real private fields when we drop support for Node.js v12
     _globalConfig;
     _testRunners = new Map();
 
-    constructor(globalConfig) {
+    constructor(globalConfig, context, runnerConfiguration) {
       // Jest's logic to decide when to spawn workers and when to run in the
       // main thread is quite complex:
       //  https://github.com/facebook/jest/blob/5183c1/packages/jest-core/src/testSchedulerHelper.ts#L13
@@ -22,7 +22,11 @@ const createRunner = ({ runtime: preferredRuntime = "worker_threads" } = {}) =>
       // with the test runner. Jest's default runner does not have this problem
       // because it isolates every test in a vm.Context.
       const runInBand = globalConfig.maxWorkers === 1;
-      const runtime = runInBand ? "main_thread" : preferredRuntime;
+      const runtime = runInBand
+        ? "main_thread"
+        : (runnerOptions?.runtime ??
+          runnerConfiguration?.runtime ??
+          "worker_threads");
 
       this._globalConfig = globalConfig;
       this._runtime = runtime;

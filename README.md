@@ -17,6 +17,7 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
 - Jest cli options: `--testNamePattern`/`-t`, `--maxWorkers`, `--runInBand`, `--expand`, `--no-expand`
 - Jest config options: `setupFiles`, `setupFilesAfterEnv`, `snapshotSerializers`, `maxWorkers`, `snapshotFormat`, `snapshotResolver`, `slowTestThreshold`, `prettierPath`, `projects`
 - Jest environment variables: `JEST_WORKER_ID`
+- Custom runner configuration options
 
 ### Unsupported Jest features
 
@@ -33,6 +34,13 @@ The lists below are not comprehensive: feel free to [start a discussion](https:/
     ```diff
     -  runner: "jest-light-runner",
     +  runner: "jest-light-runner/child-process",
+    ```
+
+  - Use child process runner (with custom runner configuration option, require Jest>=30.4.1)
+
+    ```diff
+    -  runner: "jest-light-runner",
+    +  runner: ["jest-light-runner", {runtime: "child_process"}],
     ```
 
   - Use `--runInBand`, tests will run in main thread instead of workers.
