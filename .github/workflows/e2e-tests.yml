@@ -61,6 +61,8 @@ jobs:
       - name: Prepare for Node.js v14
         if: ${{ matrix.node == '14' }}
         run: |
+          yarn config unset approvedGitRepositories
+          yarn config unset npmMinimalAgeGate
           yarn set version 3
           yarn config set httpRetry 10
           cat .yarnrc.yml
@@ -80,7 +82,7 @@ jobs:
           NODE_ENV: production
           FULL_TEST: true
         run: |
-          yarn test:production-node14 ${{ matrix.additional-options }}
+          yarn test:production ${{ matrix.additional-options }}
 
   babel:
     name: Babel
