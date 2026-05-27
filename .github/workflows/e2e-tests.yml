@@ -91,7 +91,7 @@ jobs:
       matrix:
         node:
           - ""
-          - "18"
+          - "22"
         additional-options:
           - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
@@ -121,30 +121,7 @@ jobs:
           # Disable Babel's setupFilesAfterEnv
           echo "" > test/testSetupFile.js
 
-      - name: Run tests
-        if: ${{ matrix.node != '18' }}
+      - name: Run tests for Node.js
         run: |
           make -j test-ci-coverage
           yarn test:esm ${{ matrix.additional-options }}
-
-      - name: Prepare for Node.js v18
-        if: ${{ matrix.node == '18' }}
-        env:
-          BABEL_ENV: test-legacy
-          BABEL_8_BREAKING: false
-          STRIP_BABEL_8_FLAG: true
-        run: |
-          make -j build-standalone-ci
-
-      - name: Setup Node.js v18
-        if: ${{ matrix.node == '18' }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: "18"
-
-      - name: Run tests on Node.js v18
-        if: ${{ matrix.node == '18' }}
-        env:
-          BABEL_ENV: test
-        run: |
-          node ./node_modules/.bin/jest --ci ${{ matrix.additional-options }}
