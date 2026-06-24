@@ -23,7 +23,7 @@ jobs:
       matrix:
         node:
           - ""
-          - "14"
+          - "22"
         additional-options:
           - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
@@ -33,12 +33,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: jest-light-runner
 
       - name: Checkout "prettier"
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: prettier/prettier
           path: e2e-test
@@ -52,37 +52,10 @@ jobs:
           yarn build
 
       - name: Run tests
-        if: ${{ matrix.node != '14' }}
         env:
           FULL_TEST: true
         run: |
           yarn c8 yarn jest ${{ matrix.additional-options }}
-
-      - name: Prepare for Node.js v14
-        if: ${{ matrix.node == '14' }}
-        run: |
-          yarn config unset approvedGitRepositories
-          yarn config unset npmMinimalAgeGate
-          yarn set version 3
-          yarn config set httpRetry 10
-          cat .yarnrc.yml
-          node ./scripts/prepare-test-for-legacy-nodejs.js --node-version ${{ matrix.node }}
-          cat package.json
-          yarn
-
-      - name: Setup Node.js v14
-        uses: actions/setup-node@v6
-        if: ${{ matrix.node == '14' }}
-        with:
-          node-version: "14"
-
-      - name: Run tests on Node.js v14
-        if: ${{ matrix.node == '14' }}
-        env:
-          NODE_ENV: production
-          FULL_TEST: true
-        run: |
-          yarn test:production ${{ matrix.additional-options }}
 
   babel:
     name: Babel
@@ -105,12 +78,12 @@ jobs:
           check-latest: true
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: jest-light-runner
 
       - name: Checkout "babel"
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: babel/babel
           path: e2e-test

@@ -10,28 +10,28 @@
     "./child-process": "./src/child-process.js"
   },
   "scripts": {
-    "format": "yarn prettier . --write",
-    "lint": "yarn prettier . --check"
+    "format": "prettier . --write",
+    "lint": "prettier . --check"
   },
   "dependencies": {
     "@jest/expect": "^30.4.1",
     "@jest/fake-timers": "^30.4.1",
-    "jest-circus": "^30.4.1",
+    "jest-circus": "^30.4.2",
     "jest-each": "^30.4.1",
     "jest-mock": "^30.4.1",
     "jest-snapshot": "^30.4.1",
-    "p-limit": "^6.2.0",
-    "supports-color": "^9.2.1",
-    "tinypool": "0.8.4"
+    "p-limit": "^7.3.0",
+    "supports-color": "^10.2.2",
+    "tinypool": "^2.1.0"
   },
   "devDependencies": {
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.4"
   },
   "peerDependencies": {
     "jest": "^27.5.0 || ^28.0.0 || ^29.0.0|| ^30.0.0"
   },
   "engines": {
-    "node": "^16.10.0 || ^18.12.0 || >=20.0.0"
+    "node": ">=22.0.0"
   },
   "license": "MIT",
   "files": [
