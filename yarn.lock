@@ -1630,7 +1630,7 @@ __metadata:
     p-limit: "npm:^7.3.0"
     prettier: "npm:^3.8.4"
     supports-color: "npm:^10.2.2"
-    tinypool: "npm:2.1.0"
+    tinypool: "npm:^2.1.0"
   peerDependencies:
     jest: ^27.5.0 || ^28.0.0 || ^29.0.0|| ^30.0.0
   languageName: unknown
@@ -2359,7 +2359,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinypool@npm:2.1.0":
+"tinypool@npm:^2.1.0":
   version: 2.1.0
   resolution: "tinypool@npm:2.1.0"
   checksum: 10/c11cfe84e8147d5bf198fe04ea789c068dfa8656c7f3483c76a7408c02d108b2e07d7301458021a0a98952d4a760efb6212ab49a01bac085c4aed3d6ee40ab2d

@@ -22,7 +22,7 @@
     "jest-snapshot": "^30.4.1",
     "p-limit": "^7.3.0",
     "supports-color": "^10.2.2",
-    "tinypool": "2.1.0"
+    "tinypool": "^2.1.0"
   },
   "devDependencies": {
     "prettier": "^3.8.4"
