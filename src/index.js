@@ -7,9 +7,9 @@ import pLimit from "p-limit";
 
 const createRunner = runnerOptions =>
   class LightRunner {
-    // TODO: Use real private fields when we drop support for Node.js v12
-    _globalConfig;
-    _testRunners = new Map();
+    #globalConfig;
+    #testRunners = new Map();
+    #runtime;
 
     constructor(globalConfig, context, runnerConfiguration) {
       // Jest's logic to decide when to spawn workers and when to run in the
@@ -28,8 +28,8 @@ const createRunner = runnerOptions =>
           runnerConfiguration?.runtime ??
           "worker_threads");
 
-      this._globalConfig = globalConfig;
-      this._runtime = runtime;
+      this.#globalConfig = globalConfig;
+      this.#runtime = runtime;
     }
 
     /**
@@ -40,21 +40,22 @@ const createRunner = runnerOptions =>
      * @param {*} onFailure
      */
     async runTests(tests, watcher, onStart, onResult, onFailure) {
-      const { _runtime: runtime, _globalConfig: globalConfig } = this;
+      const runtime = this.#runtime;
+      const globalConfig = this.#globalConfig;
       const mutex = pLimit(globalConfig.maxWorkers);
 
       await Promise.all(
         tests.map(test =>
           mutex(() =>
             onStart(test)
-              .then(() => this._runTest(test))
+              .then(() => this.#runTest(test))
               .then(result => onResult(test, result))
               .catch(error => onFailure(test, error)),
           ),
         ),
       );
 
-      const runners = this._testRunners;
+      const runners = this.#testRunners;
       for (const [, { pool }] of runners) {
         if (runtime === "child_process") {
           for (const { process } of pool.threads) {
@@ -72,26 +73,17 @@ const createRunner = runnerOptions =>
             };
           }
         }
-
-        // Can't call `pool.destroy()`
-        // It will cause `Error: write EPIPE` error when running on Prettier repo
-        // with this command `yarn jest tests/unit/html-elements.js`
-        // Possible caused by
-        // https://github.com/tinylibs/tinypool/issues/84
-        // And we can't update `tinypool` since we need old Node.js support
-        if (runtime !== "child_process") {
-          await pool.destroy();
-        }
       }
 
       runners.clear();
     }
 
-    _runTest(test) {
-      const runners = this._testRunners;
+    #runTest(test) {
+      const runners = this.#testRunners;
       const projectConfig = test.context.config;
       if (!runners.has(projectConfig)) {
-        const { _runtime: runtime, _globalConfig: globalConfig } = this;
+        const runtime = this.#runtime;
+        const globalConfig = this.#globalConfig;
         const { maxWorkers } = globalConfig;
         const env =
           runtime === "worker_threads"
@@ -149,29 +141,29 @@ const createRunner = runnerOptions =>
 // Exposes an API similar to Tinypool, but it uses dynamic import()
 // rather than worker_threads.
 class MainThreadTinypool {
-  _moduleP;
-  _worker;
-  _workerData;
+  #moduleP;
+  #worker;
+  #workerData;
 
   constructor({ filename, workerData }) {
-    this._moduleP = import(filename);
-    this._workerData = workerData;
+    this.#moduleP = import(filename);
+    this.#workerData = workerData;
   }
 
   async run(data) {
-    if (!this._worker) {
-      const module = await this._moduleP;
+    if (!this.#worker) {
+      const module = await this.#moduleP;
 
-      module.setWorkerData(this._workerData);
+      module.setWorkerData(this.#workerData);
 
-      this._worker = module;
+      this.#worker = module;
     }
 
-    return this._worker.default(data);
+    return this.#worker.default(data);
   }
 
   destroy() {
-    this._worker?.cleanup();
+    this.#worker?.cleanup();
   }
 }
 
