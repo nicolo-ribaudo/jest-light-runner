@@ -9,6 +9,7 @@ const createRunner = runnerOptions =>
   class LightRunner {
     #globalConfig;
     #testRunners = new Map();
+    #runtime;
 
     constructor(globalConfig, context, runnerConfiguration) {
       // Jest's logic to decide when to spawn workers and when to run in the
