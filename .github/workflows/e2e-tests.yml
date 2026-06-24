@@ -23,7 +23,7 @@ jobs:
       matrix:
         node:
           - ""
-          - "14"
+          - "22"
         additional-options:
           - "--runner jest-light-runner"
           - "--runner jest-light-runner/child-process"
