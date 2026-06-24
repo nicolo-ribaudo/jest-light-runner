@@ -73,7 +73,15 @@ const createRunner = runnerOptions =>
           }
         }
 
-        await pool.destroy();
+        // Can't call `pool.destroy()`
+        // It will cause `Error: write EPIPE` error when running on Prettier repo
+        // with this command `yarn jest tests/unit/html-elements.js`
+        // Possible caused by
+        // https://github.com/tinylibs/tinypool/issues/84
+        // And we can't update `tinypool` since we need old Node.js support
+        if (runtime !== "child_process") {
+          await pool.destroy();
+        }
       }
 
       runners.clear();
