@@ -57,29 +57,8 @@ const createRunner = runnerOptions =>
 
       const runners = this.#testRunners;
 
-      await Promise.all(
-        // Use `Array.from()` instead of `Iterator#map()` to make it work on Node.js v18 for Prettier
-        Array.from(runners, ([_, { pool }]) => {
-          if (runtime === "child_process") {
-            for (const { process } of pool.threads) {
-              // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
-              // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-              // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
-              const originalKill = process.kill;
-              process.kill = signal => {
-                if (!signal) {
-                  process.disconnect();
-                  process.kill = originalKill;
-                  return;
-                }
-                return originalKill.call(process, signal);
-              };
-            }
-          }
-
-          return pool.destroy();
-        }),
-      );
+      // Use `Array.from()` instead of `Iterator#map()` to make it work on Node.js v18 for Prettier
+      await Promise.all(Array.from(runners, ([_, { pool }]) => pool.destroy()));
 
       runners.clear();
     }
@@ -113,6 +92,7 @@ const createRunner = runnerOptions =>
           workerData,
         });
 
+        let destroy;
         let poolRunOption;
         if (runtime === "child_process") {
           const listeners = new Set();
@@ -132,11 +112,33 @@ const createRunner = runnerOptions =>
             },
           };
           poolRunOption = { channel };
+
+          destroy = () => {
+            for (const { process } of pool.threads) {
+              // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+              // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+              // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
+              const originalKill = process.kill;
+              process.kill = signal => {
+                if (!signal) {
+                  process.disconnect();
+                  process.kill = originalKill;
+                  return;
+                }
+                return originalKill.call(process, signal);
+              };
+            }
+
+            return pool.destroy();
+          };
+        } else {
+          destroy = () => pool.destroy();
         }
 
         runners.set(projectConfig, {
           pool,
           run: test => pool.run(test.path, poolRunOption),
+          destroy,
         });
       }
 
