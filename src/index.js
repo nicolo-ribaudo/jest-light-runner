@@ -171,8 +171,8 @@ function killSubprocessUntilDisconnected(process) {
   const originalKill = process.kill;
   const callKill = signal => originalKill.call(process, signal);
   const restoreKill = () => {
-    process.kill = originalKill
-  }
+    process.kill = originalKill;
+  };
   let disconnectPromise;
   const disconnect = () => {
     if (!disconnectPromise) {
@@ -182,12 +182,12 @@ function killSubprocessUntilDisconnected(process) {
       disconnectPromise.then(restoreKill);
       process.disconnect();
     }
-    return disconnectPromise
-  }
+    return disconnectPromise;
+  };
 
   process.kill = signal => {
     if (!process.connected) {
-      restoreKill()
+      restoreKill();
       return callKill(signal);
     }
 
