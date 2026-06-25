@@ -163,6 +163,11 @@ function killSubprocessUntilDisconnected(process) {
   const originalKill = process.kill;
   let disconnectPromise;
   process.kill = signal => {
+    if (!process.connected) {
+      process.kill = originalKill;
+      return originalKill.call(process, signal);
+    }
+
     if (!disconnectPromise) {
       disconnectPromise = new Promise((resolve, reject) => {
         process.once("disconnect", resolve);
