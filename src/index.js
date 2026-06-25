@@ -56,15 +56,9 @@ const createRunner = runnerOptions =>
       );
 
       const runners = this.#testRunners;
-      for (const [, { pool }] of runners) {
-        if (runtime === "child_process") {
-          for (const { process } of pool.threads) {
-            killSubprocessUntilDisconnected(process);
-          }
-        }
 
-        await pool.destroy();
-      }
+      // Use `Array.from()` instead of `Iterator#map()` to make it work on Node.js v18 for Prettier
+      await Promise.all(Array.from(runners, ([, { pool }]) => pool.destroy()));
 
       runners.clear();
     }
@@ -98,6 +92,7 @@ const createRunner = runnerOptions =>
           workerData,
         });
 
+        let destroy;
         let poolRunOption;
         if (runtime === "child_process") {
           const listeners = new Set();
@@ -117,11 +112,22 @@ const createRunner = runnerOptions =>
             },
           };
           poolRunOption = { channel };
+
+          destroy = () => {
+            for (const { process } of pool.threads) {
+              killSubprocessUntilDisconnected(process);
+            }
+
+            return pool.destroy();
+          };
+        } else {
+          destroy = () => pool.destroy();
         }
 
         runners.set(projectConfig, {
           pool,
           run: test => pool.run(test.path, poolRunOption),
+          destroy,
         });
       }
 
