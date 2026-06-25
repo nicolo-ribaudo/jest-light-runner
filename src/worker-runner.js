@@ -67,10 +67,8 @@ async function initialSetup() {
   for (const snapshotSerializer of projectConfig.snapshotSerializers
     .slice()
     .reverse()) {
-    const { default: serializer } = await import(
-      pathToFileURL(snapshotSerializer)
-    );
-    snapshot.addSerializer(serializer);
+    const module = await import(pathToFileURL(snapshotSerializer));
+    snapshot.addSerializer(module.default ?? module);
   }
 
   for (const setupFile of projectConfig.setupFilesAfterEnv) {
