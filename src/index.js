@@ -58,7 +58,7 @@ const createRunner = runnerOptions =>
       const runners = this.#testRunners;
 
       // Use `Array.from()` instead of `Iterator#map()` to make it work on Node.js v18 for Prettier
-      await Promise.all(Array.from(runners, ([_, { pool }]) => pool.destroy()));
+      await Promise.all(Array.from(runners, ([, { pool }]) => pool.destroy()));
 
       runners.clear();
     }
