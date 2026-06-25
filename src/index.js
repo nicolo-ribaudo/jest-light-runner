@@ -96,6 +96,7 @@ const createRunner = runnerOptions =>
           env,
           trackUnmanagedFds: false,
           workerData,
+          isolateWorkers: true,
         });
 
         let poolRunOption;
