@@ -58,7 +58,8 @@ const createRunner = runnerOptions =>
       const runners = this.#testRunners;
 
       await Promise.all(
-        runners.values().map(({ pool }) => {
+        // Use `Array.from()` instead of `Iterator#map()` to make it work on Node.js v18 for Prettier
+        Array.from(runners, (_, { pool }) => {
           if (runtime === "child_process") {
             for (const { process } of pool.threads) {
               // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
