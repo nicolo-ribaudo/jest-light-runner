@@ -59,18 +59,7 @@ const createRunner = runnerOptions =>
       for (const [, { pool }] of runners) {
         if (runtime === "child_process") {
           for (const { process } of pool.threads) {
-            // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
-            // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-            // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
-            const originalKill = process.kill;
-            process.kill = signal => {
-              if (!signal) {
-                process.disconnect();
-                process.kill = originalKill;
-                return;
-              }
-              return originalKill.call(process, signal);
-            };
+            killSubprocessUntilDisconnected(process);
           }
         }
       }
@@ -165,6 +154,31 @@ class MainThreadTinypool {
   destroy() {
     this.#worker?.cleanup();
   }
+}
+
+function killSubprocessUntilDisconnected(process) {
+  // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+  // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+  // Only call disconnect once https://github.com/tinylibs/tinypool/blob/abc247f85cba0309e3f1e5655db1837a2a1c2483/src/runtime/process-worker.ts#L61
+  const originalKill = process.kill;
+  let disconnectPromise;
+  process.kill = signal => {
+    if (!disconnectPromise) {
+      disconnectPromise = new Promise((resolve, reject) => {
+        process.once("disconnect", resolve);
+      });
+      disconnectPromise.then(() => {
+        process.kill = originalKill;
+      });
+      process.disconnect();
+    }
+
+    disconnectPromise.then(() => {
+      originalKill.call(process, signal);
+    });
+
+    return true;
+  };
 }
 
 export default createRunner();
