@@ -163,25 +163,30 @@ function killSubprocessUntilDisconnected(process) {
   // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
   // Only call disconnect once https://github.com/tinylibs/tinypool/blob/abc247f85cba0309e3f1e5655db1837a2a1c2483/src/runtime/process-worker.ts#L61
   const originalKill = process.kill;
+  const callKill = signal => originalKill.call(process, signal);
+  const restoreKill = () => {
+    process.kill = originalKill
+  }
   let disconnectPromise;
-  process.kill = signal => {
-    if (!process.connected) {
-      process.kill = originalKill;
-      return originalKill.call(process, signal);
-    }
-
+  const disconnect = () => {
     if (!disconnectPromise) {
       disconnectPromise = new Promise((resolve, reject) => {
         process.once("disconnect", resolve);
       });
-      disconnectPromise.then(() => {
-        process.kill = originalKill;
-      });
+      disconnectPromise.then(restoreKill);
       process.disconnect();
     }
+    return disconnectPromise
+  }
 
-    disconnectPromise.then(() => {
-      originalKill.call(process, signal);
+  process.kill = signal => {
+    if (!process.connected) {
+      restoreKill()
+      return callKill(signal);
+    }
+
+    disconnect().then(() => {
+      callKill(signal);
     });
 
     return true;
