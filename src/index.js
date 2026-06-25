@@ -62,6 +62,8 @@ const createRunner = runnerOptions =>
             killSubprocessUntilDisconnected(process);
           }
         }
+
+        await pool.destroy();
       }
 
       runners.clear();
