@@ -58,7 +58,7 @@ const createRunner = runnerOptions =>
       const runners = this.#testRunners;
 
       await Promise.all(
-        runners.values.map(({ pool }) => {
+        runners.values().map(({ pool }) => {
           if (runtime === "child_process") {
             for (const { process } of pool.threads) {
               // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
