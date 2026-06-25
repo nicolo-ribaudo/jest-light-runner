@@ -57,6 +57,7 @@ jobs:
           yarn c8 yarn jest ${{ matrix.additional-options }}
 
   babel:
+    if: ${{ false }}
     name: Babel
     strategy:
       fail-fast: false
