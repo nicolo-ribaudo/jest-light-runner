@@ -115,18 +115,7 @@ const createRunner = runnerOptions =>
 
           destroy = () => {
             for (const { process } of pool.threads) {
-              // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
-              // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
-              // Only override the first call https://github.com/tinylibs/tinypool/blob/dbf6d74282dd6031df8fc5c7706caef66b54070b/src/runtime/process-worker.ts#L61
-              const originalKill = process.kill;
-              process.kill = signal => {
-                if (!signal) {
-                  process.disconnect();
-                  process.kill = originalKill;
-                  return;
-                }
-                return originalKill.call(process, signal);
-              };
+              killSubprocessUntilDisconnected(process);
             }
 
             return pool.destroy();
@@ -173,6 +162,41 @@ class MainThreadTinypool {
   destroy() {
     this.#worker?.cleanup();
   }
+}
+
+function killSubprocessUntilDisconnected(process) {
+  // Use `process.disconnect()` instead of `process.kill()`, so we can collect coverage
+  // See https://github.com/nicolo-ribaudo/jest-light-runner/issues/90#issuecomment-2812473389
+  // Only call disconnect once https://github.com/tinylibs/tinypool/blob/abc247f85cba0309e3f1e5655db1837a2a1c2483/src/runtime/process-worker.ts#L61
+  const originalKill = process.kill;
+  const callKill = signal => originalKill.call(process, signal);
+  const restoreKill = () => {
+    process.kill = originalKill;
+  };
+  let disconnectPromise;
+  const disconnect = () => {
+    if (!disconnectPromise) {
+      disconnectPromise = new Promise((resolve, reject) => {
+        process.once("disconnect", resolve);
+      });
+      disconnectPromise.then(restoreKill);
+      process.disconnect();
+    }
+    return disconnectPromise;
+  };
+
+  process.kill = signal => {
+    if (!process.connected) {
+      restoreKill();
+      return callKill(signal);
+    }
+
+    disconnect().then(() => {
+      callKill(signal);
+    });
+
+    return true;
+  };
 }
 
 export default createRunner();

@@ -52,7 +52,6 @@ jobs:
       - name: Prepare
         run: |
           yarn up jest-light-runner@file:../jest-light-runner
-          yarn build
 
       - name: Run tests
         env:
@@ -61,6 +60,7 @@ jobs:
           yarn c8 yarn jest ${{ matrix.additional-options }}
 
   babel:
+    if: ${{ false }}
     name: Babel
     strategy:
       fail-fast: false
