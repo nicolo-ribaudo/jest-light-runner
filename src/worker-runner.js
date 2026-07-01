@@ -270,7 +270,7 @@ async function runHooks(hook, block, results, stats, ancestors, runInParents) {
 function callAsync(fn) {
   if (fn.length >= 1) {
     return new Promise((resolve, reject) => {
-      fn((err, result) => {
+      fn.call(unsupportedTestContext, (err, result) => {
         if (err) {
           reject(err);
         } else {
@@ -279,9 +279,35 @@ function callAsync(fn) {
       });
     });
   } else {
-    return Promise.resolve().then(fn);
+    return Promise.resolve().then(() => fn.call(unsupportedTestContext));
   }
 }
+
+/**
+ * Test and hook functions have a `this: TestContext` signature, i.e. are called using a `TestContext` as receiver.
+ * jest-light-runner does not support interacting with this object, so a proxy object is provided that throws when
+ * accessed.
+ *
+ * Additionally, calling test/hook functions with receiver affects how V8 formats their stack frame. Without receiver,
+ * the test's stack frame may be formatted as `<anonymous> (file)`, whereas the presence of a receiver causes it to
+ * become `Object.<anonymous> (file)` instead. This difference is important for Jest's inline snapshot to work, as it
+ * considers fully anonymous frames as "internal" and excludes those when finding the inline snapshot insertion
+ * location.
+ *
+ * @see https://github.com/jestjs/jest/blob/f49721c78e195558b40913977c9230f5b7f559d8/packages/jest-message-util/src/index.ts#L235-L246
+ */
+const unsupportedTestContext = (() => {
+  const unsupported = () => {
+    throw new Error("TestContext is not available with jest-light-runner");
+  };
+  return new Proxy(
+    {},
+    {
+      get: unsupported,
+      set: unsupported,
+    },
+  );
+})();
 
 /**
  *
