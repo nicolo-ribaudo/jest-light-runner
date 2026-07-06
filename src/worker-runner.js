@@ -78,6 +78,10 @@ async function initialSetup() {
     if (typeof setup === "function") await setup();
   }
 
+  // Capture hooks registered by setupFilesAfterEnv so they can be replayed
+  // after each circus.resetState() call (which wipes the root describe block).
+  state.setupEnvHooks = circus.getState().rootDescribeBlock.hooks.slice();
+
   state.projectSnapshotSerializers = snapshot.getSerializers().slice();
   state.snapshotResolver = await snapshot.buildSnapshotResolver(projectConfig);
   state.testNamePatternRE =
@@ -99,6 +103,7 @@ export default async function run(testFilePath) {
     projectSnapshotSerializers,
     snapshotResolver,
     testNamePatternRE,
+    setupEnvHooks,
   } = projectState;
 
   /** @type {Stats} */
@@ -121,7 +126,7 @@ export default async function run(testFilePath) {
     expand: globalConfig.expand,
   });
 
-  const { tests, hasFocusedTests } = await loadTests(testFilePath);
+  const { tests, hasFocusedTests } = await loadTests(testFilePath, setupEnvHooks);
 
   stats.start = performance.now();
   await runTestBlock(tests, hasFocusedTests, testNamePatternRE, results, stats);
@@ -139,8 +144,15 @@ export default async function run(testFilePath) {
   return result;
 }
 
-async function loadTests(testFile) {
+async function loadTests(testFile, setupEnvHooks) {
   circus.resetState();
+  // Re-register hooks from setupFilesAfterEnv into the fresh root describe
+  // block. circus.resetState() wipes all state including these hooks, but
+  // they should apply to every test file just as in the standard Jest runner.
+  if (setupEnvHooks && setupEnvHooks.length > 0) {
+    const { rootDescribeBlock } = circus.getState();
+    rootDescribeBlock.hooks.push(...setupEnvHooks);
+  }
   await import(pathToFileURL(testFile) + "?" + Date.now());
   const { rootDescribeBlock, hasFocusedTests } = circus.getState();
   return { tests: rootDescribeBlock, hasFocusedTests };
