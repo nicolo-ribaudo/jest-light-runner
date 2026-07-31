@@ -20,3 +20,6 @@ jobs:
 
       - name: Run prettier
         run: yarn lint
+
+      - name: Preview
+        run: npx pkg-pr-new publish --compact
