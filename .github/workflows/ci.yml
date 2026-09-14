@@ -20,3 +20,7 @@ jobs:
 
       - name: Run prettier
         run: yarn lint
+
+      - name: Preview
+        if: github.repository == 'nicolo-ribaudo/jest-light-runner'
+        run: npx pkg-pr-new publish --compact
