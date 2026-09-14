@@ -83,7 +83,7 @@ const createRunner = runnerOptions =>
         const pool = new (
           runtime === "main_thread" ? MainThreadTinypool : Tinypool
         )({
-          filename: new URL("./worker-runner.js", import.meta.url).href,
+          filename: new URL("./worker-runner.js", import.meta.url),
           runtime,
           minThreads: maxWorkers,
           maxThreads: maxWorkers,
