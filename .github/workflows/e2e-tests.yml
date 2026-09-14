@@ -44,7 +44,7 @@ jobs:
           path: e2e-test
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           check-latest: true
           node-version: ${{ matrix.node }}
@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           check-latest: true
           node-version: ${{ matrix.node }}
